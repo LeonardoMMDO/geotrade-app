@@ -1,0 +1,80 @@
+<section class="registro-container">
+  <a routerLink="/login" class="btn-regresar-fixed">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="45" height="45">
+      <path d="M256 0C114.6 0 0 114.6 0 256c0 141.4 114.6 256 256 256s256-114.6 256-256C512 114.6 397.4 0 256 0zM384 288H205.3l49.38 49.38c12.5 12.5 12.5 32.75 0 45.25s-32.75 12.5-45.25 0L105.4 278.6c-12.5-12.5-12.5-32.75 0-45.25l104.1-104.1c12.5-12.5 32.75-12.5 45.25 0s12.5 32.75 0 45.25L205.3 224H384c17.69 0 32 14.31 32 32S401.7 288 384 288z" />
+    </svg>
+  </a>
+
+  <div class="registro-card">
+    <div class="user-icon_reg">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-person-circle" viewBox="0 0 16 16">
+        <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0" />
+        <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1" />
+      </svg>
+    </div>
+
+    <h2 class="registro-title">Crea tu Cuenta</h2>
+
+    <form class="registro-form" #registroForm="ngForm">
+      
+      <div class="input-group_reg">
+        <input type="text" placeholder="Nombre Completo" [(ngModel)]="usuario.nombre" name="nombre" #nombre="ngModel" required pattern="^[a-zA-ZñÑáéíóúÁÉÍÓÚ\s]{3,}\s[a-zA-ZñÑáéíóúÁÉÍÓÚ\s]{2,}$">
+      </div>
+
+      <div class="input-group_reg">
+        <input type="email" placeholder="Correo electrónico" [(ngModel)]="usuario.correo" name="correo" #correo="ngModel" required email>
+      </div>
+
+      <div class="input-group_reg">
+        <input type="tel" placeholder="Teléfono (10 dígitos)" [(ngModel)]="usuario.telefono" name="telefono" #telefono="ngModel" required pattern="[0-9]{10}">
+      </div>
+
+      <div class="input-group_reg">
+        <input type="password" placeholder="Contraseña (Mín. 10)" [(ngModel)]="usuario.pass" name="pass" #pass="ngModel" required minlength="10">
+      </div>
+
+      <p class="rol-label">¿Cuál será tu función?</p>
+      <div class="rol-selection-container">
+        <label class="rol-box">
+          <input type="radio" name="rol" value="usuario" [(ngModel)]="usuario.rol" required>
+          <div class="rol-content">
+            <i class="bi bi-person-walking"></i>
+            <span>Explorador</span>
+          </div>
+        </label>
+        <label class="rol-box">
+          <input type="radio" name="rol" value="empresario" [(ngModel)]="usuario.rol" required>
+          <div class="rol-content">
+            <i class="bi bi-shop"></i>
+            <span>Empresario</span>
+          </div>
+        </label>
+      </div>
+
+      <button type="button" class="btn-green_crud" [disabled]="registroForm.invalid" (click)="abrirConfirmacion()">
+        Crear cuenta
+      </button>
+    </form>
+  </div>
+
+  <div class="modal-overlay" *ngIf="mostrarModal">
+    <div class="modal-card">
+      <h3 class="modal-title">¿Estás seguro de que los datos son correctos?</h3>
+      <div class="warning-container">
+        <i class="bi bi-exclamation-triangle-fill warning-icon"></i>
+      </div>
+      <div class="modal-body">
+        <div class="data-summary">
+          <p><strong>Nombre:</strong> {{usuario.nombre}}</p>
+          <p><strong>Correo:</strong> {{usuario.correo}}</p>
+          <p><strong>Teléfono:</strong> {{usuario.telefono}}</p>
+          <p><strong>Rol:</strong> {{usuario.rol === 'usuario' ? 'Explorador' : 'Empresario'}}</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-modal-red" (click)="mostrarModal = false">Cancelar</button>
+        <button class="btn-modal-green" (click)="confirmarRegistro()">Continuar</button>
+      </div>
+    </div>
+  </div>
+</section>

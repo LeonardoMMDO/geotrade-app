@@ -1,0 +1,40 @@
+<a routerLink="/" class="btn-regresar-fixed">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="40" height="40">
+        <path fill="white" d="M256 0C114.6 0 0 114.6 0 256c0 141.4 114.6 256 256 256s256-114.6 256-256C512 114.6 397.4 0 256 0zM384 288H205.3l49.38 49.38c12.5 12.5 12.5 32.75 0 45.25s-32.75 12.5-45.25 0L105.4 278.6c-12.5-12.5-12.5-32.75 0-45.25l104.1-104.1c12.5-12.5 32.75-12.5 45.25 0s12.5 32.75 0 45.25L205.3 224H384c17.69 0 32 14.31 32 32S401.7 288 384 288z" />
+    </svg>
+</a>
+
+<section class="login-container_sesion">
+    <div class="login-card_sesion">
+        <h2 class="login-title_sesion">¡Inicia Sesión!</h2>
+
+        <div class="user-icon_sesion">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="white" viewBox="0 0 16 16">
+                <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0" />
+                <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1" />
+            </svg>
+        </div>
+
+        <form class="login-form_sesion">
+            <div class="input-group_sesion">
+                <input type="text" placeholder="Usuario" required>
+            </div>
+            <div class="input-group_sesion">
+                <input type="password" placeholder="Contraseña" required>
+            </div>
+
+            <div class="login-buttons_container">
+                <div class="action-item item-ingresar">
+                    <button type="submit" class="btn-login_sesion">Ingresar</button>
+                </div>
+
+                <div class="action-item item-registro group-column">
+                    <a href="#" class="forgot-link_sesion">¿Olvidaste tu contraseña?</a>
+                    <a routerLink="/registro" class="btn-crear_sesion no-decoration">
+                        Crear cuenta
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</section>

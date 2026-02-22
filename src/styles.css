@@ -1,0 +1,22 @@
+/* You can add global styles to this file, and also import other style files */
+/* =========================================
+   CONFIGURACIÓN GENERAL (GLOBAL)
+   ========================================= */
+
+* {
+    margin: 0;
+    /* Elimina el espacio exterior por defecto */
+    padding: 0;
+    /* Elimina el espacio interior por defecto */
+    box-sizing: border-box;
+    /* Incluye padding y borde en el ancho total */
+    font-family: 'Poppins', sans-serif;
+    /* Fuente base */
+}
+
+body {
+    background-color: #f4f7f6;
+    /* Color de fondo base */
+    overflow-x: hidden;
+    /* Evita desbordamiento horizontal */
+}
