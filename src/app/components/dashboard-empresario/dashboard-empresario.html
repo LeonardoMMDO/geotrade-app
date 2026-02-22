@@ -1,0 +1,91 @@
+<header class="navbar">
+    <div class="logo-section">
+        <i class="bi bi-building-fill-check icon-nav-biz"></i>
+        <span class="brand-name">GeoTrade <small>Business</small></span>
+    </div>
+    <div class="user-profile">
+        <span class="welcome-text">Panel de: <strong id="empName">Samuel (Empresario)</strong></span>
+        <div class="avatar-circle"><i class="bi bi-person-badge"></i></div>
+    </div>
+</header>
+
+<div class="main-container">
+    <aside class="sidebar-biz">
+        <div class="sidebar-header">
+            <h3>Mis Negocios</h3>
+            <button class="btn-add-biz" id="btnAddNewBiz"><i class="bi bi-plus-lg"></i> Registrar</button>
+        </div>
+        <hr class="divider">
+        <nav class="business-list" id="myBusinessList">
+            <div class="biz-item active" data-biz-id="1">
+                <i class="bi bi-shop"></i>
+                <div class="biz-info-short">
+                    <span class="biz-name">Tacos "El Inge"</span>
+                    <span class="biz-status">Activo</span>
+                </div>
+            </div>
+        </nav>
+        <div style="margin-top: auto; padding-top: 20px;">
+            <a routerLink="/explorador" style="text-decoration: none; color: #7f8c8d; font-size: 0.9rem;">
+                <i class="bi bi-arrow-left"></i> Volver al Mapa
+            </a>
+        </div>
+    </aside>
+
+    <main class="content-area" id="bizContentArea">
+        <div id="registrationForm" class="biz-card anim-pop">
+            <div class="card-header">
+                <h2><i class="bi bi-pencil-square"></i> Registrar Nuevo Negocio</h2>
+                <p>Completa la información para aparecer en el mapa</p>
+            </div>
+            <form id="formRegisterBiz" class="grid-form">
+                <div class="form-group full-width">
+                    <label>Nombre de la Empresa</label>
+                    <input type="text" id="bizName" required>
+                </div>
+                <div class="form-group">
+                    <label>Categoría</label>
+                    <select id="bizCategory">
+                        <option value="restaurante">Restaurantes</option>
+                        <option value="estetica">Estética</option>
+                        <option value="abarrotes">Abarrotes</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Teléfono de contacto</label>
+                    <input type="tel" id="bizPhone">
+                </div>
+                <div class="form-group">
+                    <label>Dirección</label>
+                    <input type="text" id="bizAddress">
+                </div>
+                <div class="form-group">
+                    <label>Horario de atención</label>
+                    <input type="text" id="bizSchedule" placeholder="Ej: 09:00 - 18:00">
+                </div>
+                <div class="form-group full-width">
+                    <label>Correo Electrónico de Empresa</label>
+                    <input type="email" id="bizEmail">
+                </div>
+                <div class="form-group full-width">
+                    <label>Descripción</label>
+                    <textarea id="bizDesc" rows="3"></textarea>
+                </div>
+                
+                <div class="form-group full-width">
+                    <label><i class="bi bi-images"></i> Fotos del Negocio</label>
+                    <div class="upload-container">
+                        <input type="file" id="bizPhotos" multiple accept="image/*">
+                        <div id="previewContainer" class="preview-grid"></div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-save-biz">Guardar Negocio</button>
+                </div>
+            </form>
+        </div>
+
+        <div id="detailsView" class="biz-card anim-pop" style="display: none;"></div>
+    </main>
+</div>

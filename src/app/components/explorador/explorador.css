@@ -1,0 +1,449 @@
+/* --- RESET GENERAL --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Montserrat', sans-serif;
+}
+
+body {
+    background-color: #6a92bc;
+    overflow: hidden; /* Evita el scroll global */
+}
+
+/* --- HEADER / NAVBAR --- */
+.navbar {
+    background-color: #1a2a3a;
+    height: 60px;
+    display: flex;
+    justify-content: space-between; /* Mantiene logo a la izq y perfil a la der */
+    align-items: center;
+    padding: 0 25px;
+    color: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    position: relative; /* Clave para el centrado absoluto del texto */
+    z-index: 100;
+}
+
+.logo-section {
+    display: flex;
+    align-items: center;
+}
+
+.icon-nav-world {
+    font-size: 2.2rem;
+    color: #a3c1e0;
+    transition: transform 0.3s;
+    cursor: pointer;
+}
+
+.icon-nav-world:hover {
+    transform: rotate(20deg);
+}
+
+/* BIENVENIDA CENTRADA */
+.welcome-container {
+    position: absolute; /* Se despega del flujo para centrarse respecto a la barra */
+    left: 50%;
+    transform: translateX(-50%);
+    pointer-events: none; /* No estorba clics en otros elementos */
+    white-space: nowrap;
+}
+
+.welcome-text {
+    font-size: 1.4rem; /* Tamaño aumentado */
+    color: white;
+}
+
+.user-highlight {
+    font-weight: 700;
+    color: #a3c1e0;
+    text-transform: capitalize;
+}
+
+/* PERFIL Y CERRAR SESIÓN */
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.logout-link {
+    color: #ff6b6b;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 700;
+    transition: opacity 0.3s;
+}
+
+.logout-link:hover {
+    opacity: 0.7;
+}
+
+.profile-icon-container {
+    color: white; /* Color original */
+    display: flex;
+    align-items: center;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), color 0.3s;
+}
+
+.profile-icon-container:hover {
+    transform: scale(1.15) rotate(5deg); /* Animación coqueta */
+    color: #a3c1e0;
+}
+
+.profile-svg {
+    filter: drop-shadow(0 0 5px rgba(163, 193, 224, 0.2));
+}
+
+/* --- DISEÑO PRINCIPAL (SIDEBAR + MAPA) --- */
+.main-container {
+    display: flex;
+    height: calc(100vh - 60px);
+}
+
+/* --- SIDEBAR --- */
+.sidebar {
+    width: 320px;
+    padding: 20px;
+    background-color: rgba(26, 42, 58, 0.15);
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-header {
+    text-align: center;
+    margin-bottom: 5px;
+}
+
+.title-categories {
+    background: white;
+    color: #1a2a3a;
+    padding: 12px 30px;
+    border-radius: 25px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.divider-improved {
+    border: 0;
+    height: 3px;
+    background: linear-gradient(to right, transparent, white, transparent);
+    width: 95%;
+    margin: 20px auto;
+    opacity: 0.8;
+}
+
+/* --- LISTA DE CATEGORÍAS (OCUPA TODO EL ALTO) --- */
+.categories-list {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-bottom: 10px;
+}
+
+.category-item {
+    flex: 1; /* Estira las categorías para no dejar espacio abajo */
+    background: #a3c1e0;
+    color: #1a2a3a;
+    padding: 0 20px;
+    border-radius: 25px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+.icon-svg {
+    flex-shrink: 0;
+    color: #1a2a3a;
+    width: 24px;
+    height: 24px;
+}
+
+/* INTERACCIÓN DE CATEGORÍAS */
+.category-item:hover {
+    background-color: white;
+    transform: scale(1.03) translateX(8px);
+    box-shadow: 5px 5px 15px rgba(0,0,0,0.1);
+}
+
+.category-item.active {
+    background-color: #1a2a3a;
+    color: white;
+    border: 2px solid white;
+}
+
+.category-item.active .icon-svg {
+    color: white;
+}
+
+/* Animación de entrada suave */
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.anim-pop {
+    animation: fadeInUp 0.5s ease backwards;
+}
+
+/* --- CONTENEDOR DEL MAPA --- */
+.map-container {
+    flex-grow: 1;
+    background: #f0f2f5;
+    border-left: 3px solid #1a2a3a;
+}
+
+#google-map-placeholder {
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #888;
+    font-style: italic;
+}
+/*---- Usuario perfil */
+/* --- MENU DESPLEGABLE --- */
+.profile-dropdown {
+    position: absolute;
+    top: 65px; /* Justo debajo de la navbar */
+    right: 20px;
+    width: 250px;
+    background-color: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    display: none; /* Se activa con JS */
+    flex-direction: column;
+    padding: 15px;
+    z-index: 1000;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+/* Cuando el menú esté abierto */
+.profile-dropdown.show {
+    display: flex;
+    animation: slideDropdown 0.3s ease-out;
+}
+
+@keyframes slideDropdown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdown-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 5px;
+}
+
+.avatar-large {
+    font-size: 2.5rem;
+    color: #1a2a3a;
+}
+
+.user-name {
+    font-weight: 700;
+    color: #1a2a3a;
+    font-size: 1rem;
+}
+
+.user-email {
+    font-size: 0.75rem;
+    color: #666;
+}
+
+.dropdown-divider {
+    border: 0;
+    height: 1px;
+    background: #eee;
+    margin: 10px 0;
+}
+
+.dropdown-options {
+    list-style: none;
+}
+
+.dropdown-options li a {
+    text-decoration: none;
+    color: #333;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border-radius: 8px;
+    transition: 0.2s;
+}
+
+.dropdown-options li a:hover {
+    background-color: #f0f4f8;
+    color: #1a2a3a;
+}
+
+.btn-logout-dropdown {
+    text-decoration: none;
+    color: #ff4757;
+    font-size: 0.9rem;
+    font-weight: 700;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-radius: 8px;
+    transition: 0.2s;
+}
+
+.btn-logout-dropdown:hover {
+    background-color: #fff0f0;
+}
+
+/* Editar Perfil */
+.edit-profile-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f0f2f5; /* Color claro para contrastar con la sidebar */
+}
+
+.edit-card {
+    background: white;
+    width: 450px;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+}
+
+.edit-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.edit-header h2 {
+    color: #1a2a3a;
+    font-size: 1.6rem;
+}
+
+.edit-header p {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+/* Estilo de la Foto */
+.photo-section {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 25px;
+}
+
+.profile-avatar-edit {
+    position: relative;
+    font-size: 5rem;
+    color: #1a2a3a;
+}
+
+.btn-change-photo {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    background: #a3c1e0;
+    border: none;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    color: #1a2a3a;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    transition: 0.3s;
+}
+
+.btn-change-photo:hover {
+    background: #1a2a3a;
+    color: white;
+}
+
+/* Formulario */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 700;
+    color: #1a2a3a;
+    font-size: 0.9rem;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #eee;
+    border-radius: 10px;
+    outline: none;
+    transition: 0.3s;
+}
+
+.form-group input:focus {
+    border-color: #a3c1e0;
+}
+
+/* Botones */
+.form-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.btn-save, .btn-cancel {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-save {
+    background: #1a2a3a;
+    color: white;
+}
+
+.btn-save:hover {
+    background: #2c3e50;
+    transform: translateY(-2px);
+}
+
+.btn-cancel {
+    background: #eee;
+    color: #666;
+}
+
+.btn-cancel:hover {
+    background: #ddd;
+}
+/* Para que el menú se muestre cuando el JS añade la clase 'active' */
+.profile-dropdown.active {
+    display: block !important;
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+/* Para que el formulario se centre bien en el lugar del mapa */
+#editProfileSection {
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}

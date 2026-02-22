@@ -21,18 +21,16 @@ export class RegistroComponent {
   }
 
   confirmarRegistro() {
-    // EL SWITCH QUE PIDIÓ EL PROFE
-    switch (this.usuario.rol) {
-      case 'usuario':
-        console.log("Navegando a Explorador...");
-        this.router.navigate(['/explorador']); 
-        break;
-      case 'empresario':
-        console.log("Navegando a Dashboard Empresario...");
-        this.router.navigate(['/dashboard-empresario']); 
-        break;
-      default:
-        console.log("Rol no identificado");
-    }
+    console.log("Datos capturados:", this.usuario);
+    
+    // Cerramos el modal
+    this.mostrarModal = false;
+
+    // Mensaje de éxito
+    alert("¡Registro exitoso! Por favor, inicia sesión con tus credenciales.");
+
+    // LA ÚNICA RUTA POSIBLE: LOGIN
+    console.log("Navegando hacia el Login...");
+    this.router.navigate(['/login']); 
   }
 }

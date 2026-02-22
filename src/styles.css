@@ -1,22 +1,28 @@
-/* You can add global styles to this file, and also import other style files */
-/* =========================================
-   CONFIGURACIÓN GENERAL (GLOBAL)
-   ========================================= */
+/* src/styles.css */
 
+/* Importación de Fuente */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+
+/* Variables para reutilizar en toda la app */
+:root {
+    --primary-biz: #2c3e50;
+    --accent-biz: #3498db;
+    --success: #27ae60;
+    --bg-light: #f4f7f6;
+    --white: #ffffff;
+    --dark-blue: #1a2a3a; /* El azul oscuro de tu navbar */
+    --light-blue: #a3c1e0; /* El azul claro de tus iconos */
+}
+
+/* Reset Universal */
 * {
     margin: 0;
-    /* Elimina el espacio exterior por defecto */
     padding: 0;
-    /* Elimina el espacio interior por defecto */
     box-sizing: border-box;
-    /* Incluye padding y borde en el ancho total */
-    font-family: 'Poppins', sans-serif;
-    /* Fuente base */
+    font-family: 'Montserrat', sans-serif;
 }
 
 body {
-    background-color: #f4f7f6;
-    /* Color de fondo base */
-    overflow-x: hidden;
-    /* Evita desbordamiento horizontal */
+    margin: 0;
+    padding: 0;
 }
