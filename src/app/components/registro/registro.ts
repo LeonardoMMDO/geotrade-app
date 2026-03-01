@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { UsuarioService } from '../../services/usuario.service';
 
 @Component({
   selector: 'app-registro',
@@ -12,25 +13,49 @@ import { Router, RouterLink } from '@angular/router';
 })
 export class RegistroComponent {
   mostrarModal = false;
-  usuario = { nombre: '', correo: '', telefono: '', rol: 'usuario', pass: '' };
+  
+  usuario = { 
+    nombre: '', 
+    correo: '', 
+    telefono: '',
+    pass: '',
+    rol: ''  
+  };
 
-  constructor(private router: Router) {}
+
+  constructor(private router: Router, private usuarioService: UsuarioService) {}
 
   abrirConfirmacion() {
     this.mostrarModal = true;
   }
 
-  confirmarRegistro() {
-    console.log("Datos capturados:", this.usuario);
-    
-    // Cerramos el modal
-    this.mostrarModal = false;
+ confirmarRegistro() {
+  const rolSeleccionado = this.usuario.rol;
+  this.mostrarModal = false;
 
-    // Mensaje de éxito
-    alert("¡Registro exitoso! Por favor, inicia sesión con tus credenciales.");
+  // IMPORTANTE: Asegúrate de que los campos coincidan con tu modelo Java
+  this.usuarioService.registrarUsuario(this.usuario).subscribe({
+    next: (response) => {
+      console.log("Registro exitoso:", response);
+      // Opcional: Guardar el nombre de una vez para que al redirigir ya esté ahí
+      localStorage.setItem('nombreUsuario', this.usuario.nombre);
+      this.ejecutarRedireccion(rolSeleccionado);
+    },
+    error: (err) => {
+      console.error("Fallo de conexión:", err);
+      alert("No se pudo conectar con el servidor Java.");
+    }
+  });
+}
 
-    // LA ÚNICA RUTA POSIBLE: LOGIN
-    console.log("Navegando hacia el Login...");
-    this.router.navigate(['/login']); 
+// Función auxiliar para no repetir código
+ejecutarRedireccion(rol: string) {
+  if (rol === 'usuario') {
+    this.router.navigate(['/explorador']);
+  } else if (rol === 'empresario') {
+    this.router.navigate(['/dashboard-empresario']);
+  } else {
+    this.router.navigate(['/login']);
   }
+}
 }

@@ -15,13 +15,13 @@
             </svg>
         </div>
 
-        <form class="login-form_sesion" #loginForm="ngForm" (ngSubmit)="iniciarSesion(loginForm)">
+        <form class="login-form_sesion" #loginForm="ngForm" (ngSubmit)="iniciarSesion(loginForm)" novalidate>
             <div class="input-group_sesion">
-                <input type="text" name="usuario" [(ngModel)]="loginData.correo" placeholder="Usuario / Correo" required>
+                <input type="email" name="correo" [(ngModel)]="loginData.correo" placeholder="Usuario / Correo" required #correoModel="ngModel">
             </div>
 
             <div class="input-group_sesion">
-                <input type="password" name="password" [(ngModel)]="loginData.pass" placeholder="Contraseña" required>
+                <input type="password" name="pass" [(ngModel)]="loginData.pass" placeholder="Contraseña" required #passModel="ngModel">
             </div>
 
             <div class="login-buttons_container">
@@ -29,7 +29,7 @@
                     <button type="submit" class="btn-login_sesion">Ingresar</button>
                 </div>
                 <div class="action-item item-registro group-column">
-                    <a href="#" class="forgot-link_sesion">¿Olvidaste tu contraseña?</a>
+                    <a routerLink="/olvidepassword" class="forgot-link_sesion">¿Olvidaste tu contraseña?</a>
                     <a routerLink="/registro" class="btn-crear_sesion no-decoration">Crear cuenta</a>
                 </div>
             </div>

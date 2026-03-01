@@ -22,7 +22,12 @@
       </div>
 
       <div class="input-group_reg">
-        <input type="email" placeholder="Correo electrónico" [(ngModel)]="usuario.correo" name="correo" #correo="ngModel" required email>
+        <input type="email" placeholder="Correo electrónico" [(ngModel)]="usuario.correo" name="correo" #correo="ngModel" required 
+          pattern="^[a-zA-Z0-9._%+-]+@(gmail|hotmail|outlook|icloud|yahoo|live|prodigy|tecnm)\.(com|net|org|mx|es)$">
+        <div *ngIf="correo.invalid && (correo.dirty || correo.touched)" style="color: #ff4d4d; font-size: 12px; margin-top: 5px;">
+          <span *ngIf="correo.errors?.['required']">El correo es obligatorio.</span>
+          <span *ngIf="correo.errors?.['pattern']">Ingresa un dominio válido (ej: @gmail.com).</span>
+        </div>
       </div>
 
       <div class="input-group_reg">

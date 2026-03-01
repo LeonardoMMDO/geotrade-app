@@ -1,91 +1,245 @@
 <header class="navbar">
     <div class="logo-section">
         <i class="bi bi-building-fill-check icon-nav-biz"></i>
-        <span class="brand-name">GeoTrade <small>Business</small></span>
+        <span class="brand-name">GeoTrade Business</span>
     </div>
-    <div class="user-profile">
-        <span class="welcome-text">Panel de: <strong id="empName">Samuel (Empresario)</strong></span>
-        <div class="avatar-circle"><i class="bi bi-person-badge"></i></div>
+
+    <div class="bienvenida">
+        <span class="brand-name"> Bienvenido Empresario</span>
     </div>
+    
+   <div class="user-profile">
+    <span class="welcome-text">
+        Panel de: <strong>{{ nombreDisplay }}</strong>
+    </span>
+    <a href="javascript:void(0)" class="profile-icon-container" id="profileBtnBiz">
+        <svg xmlns="http://www.w3.org/2000/svg" width="35" height="35" fill="currentColor" class="bi bi-person-circle" viewBox="0 0 16 16">
+            <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0"/>
+            <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1"/>
+        </svg>
+    </a>
+
+    <div class="profile-dropdown-biz" id="profileDropdownBiz">
+        <div class="dropdown-header">
+            <div class="avatar-large"><i class="bi bi-person-circle"></i></div>
+            <div class="info">
+                <p class="user-name">{{ nombreDisplay }}</p>
+                <p class="user-email">{{ correoDisplay }}</p>
+            </div>
+        </div>
+        <hr class="dropdown-divider">
+        <ul class="dropdown-options">
+            <li><a href="javascript:void(0)" id="openEditBiz"><i class="bi bi-person-gear"></i> Editar Perfil</a></li>
+        </ul>
+        <hr class="dropdown-divider">
+        <a routerLink="/inicio" class="btn-logout-dropdown">
+            <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+        </a>
+    </div>
+</div>
+
 </header>
+
 
 <div class="main-container">
     <aside class="sidebar-biz">
-        <div class="sidebar-header">
-            <h3>Mis Negocios</h3>
-            <button class="btn-add-biz" id="btnAddNewBiz"><i class="bi bi-plus-lg"></i> Registrar</button>
-        </div>
-        <hr class="divider">
-        <nav class="business-list" id="myBusinessList">
-            <div class="biz-item active" data-biz-id="1">
-                <i class="bi bi-shop"></i>
-                <div class="biz-info-short">
-                    <span class="biz-name">Tacos "El Inge"</span>
-                    <span class="biz-status">Activo</span>
-                </div>
+    <div class="sidebar-header">
+        <h3 class="sidebar-title">Mis Negocios</h3>
+        <button id="btnAddNewBiz" class="btn-add-mini" (click)="ngAfterViewInit()">
+            <i class="bi bi-plus-lg"></i> Nuevo
+        </button>
+    </div>
+    
+    <hr class="divider">
+
+    <nav class="business-list">
+        <div *ngFor="let biz of negocios" 
+             class="biz-item" 
+             (click)="mostrarDetallesDinamicos(biz)">
+            <i class="bi bi-shop"></i>
+            <div class="biz-info-short">
+                <span class="biz-name">{{ biz.nombre_empresa }}</span>
+                <span class="biz-status"> - Activo</span>
             </div>
-        </nav>
-        <div style="margin-top: auto; padding-top: 20px;">
-            <a routerLink="/explorador" style="text-decoration: none; color: #7f8c8d; font-size: 0.9rem;">
-                <i class="bi bi-arrow-left"></i> Volver al Mapa
-            </a>
         </div>
-    </aside>
+        <div style="height: 1px; background-color: #eee; margin: 0 10px;"></div>
+        <div *ngIf="negocios && negocios.length === 0" class="no-data-msg">
+            <p>No tienes negocios registrados aún.</p>
+        </div>
+    </nav>
+</aside>
 
     <main class="content-area" id="bizContentArea">
+        
         <div id="registrationForm" class="biz-card anim-pop">
             <div class="card-header">
                 <h2><i class="bi bi-pencil-square"></i> Registrar Nuevo Negocio</h2>
-                <p>Completa la información para aparecer en el mapa</p>
+                <p>Completa la información para registrar tu negocio</p>
             </div>
+
             <form id="formRegisterBiz" class="grid-form">
                 <div class="form-group full-width">
-                    <label>Nombre de la Empresa</label>
-                    <input type="text" id="bizName" required>
+                    <label for="bizName">Nombre de la Empresa</label>
+                    <input type="text" id="bizName" name="nombre_empresa" [(ngModel)]="tempNegocio.nombre_empresa" required placeholder="Ej. Abarrotes 'La Esquina'">
                 </div>
-                <div class="form-group">
-                    <label>Categoría</label>
-                    <select id="bizCategory">
-                        <option value="restaurante">Restaurantes</option>
-                        <option value="estetica">Estética</option>
-                        <option value="abarrotes">Abarrotes</option>
-                    </select>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="bizCategory">Categoría</label>
+                        <select id="bizCategory" name="categoria_empresa" [(ngModel)]="tempNegocio.categoria_empresa">
+                            <option value="restaurante">Restaurantes</option>
+                            <option value="estetica">Estética</option>
+                            <option value="abarrotes">Abarrotes</option>
+                            <option value="ferreteria">Ferretería</option>
+                            <option value="panaderia">Panadería</option>
+                            <option value="papeleria">Papelería</option>
+                        </select>
+                    </div>
+                    <br><br>
+
+                    <div class="form-group">
+                        <label for="bizPhone">Teléfono de contacto</label>
+                        <input type="tel" id="bizPhone" name="telefono_empresa" [(ngModel)]="tempNegocio.telefono_empresa">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Teléfono de contacto</label>
-                    <input type="tel" id="bizPhone">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="bizAddress">Dirección</label>
+                        <input type="text" id="bizAddress" name="direccion_empresa" [(ngModel)]="tempNegocio.direccion_empresa">
+                    </div>
+
+                    <br><br>
+
+                    <div class="form-group">
+                        <label for="bizSchedule">Horario de atención</label>
+                        <input type="text" id="bizSchedule" name="horario_empresa" [(ngModel)]="tempNegocio.horario_empresa" placeholder="Ej: 09:00 - 18:00">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Dirección</label>
-                    <input type="text" id="bizAddress">
-                </div>
-                <div class="form-group">
-                    <label>Horario de atención</label>
-                    <input type="text" id="bizSchedule" placeholder="Ej: 09:00 - 18:00">
-                </div>
+
                 <div class="form-group full-width">
-                    <label>Correo Electrónico de Empresa</label>
-                    <input type="email" id="bizEmail">
+                    <label for="bizEmail">Correo Electrónico de Empresa</label>
+                    <input 
+                        type="email" 
+                        id="bizEmail" 
+                        name="correo_empresa" 
+                        [(ngModel)]="tempNegocio.correo_empresa" 
+                        #emailBiz="ngModel"
+                        required 
+                        pattern="^[a-zA-Z0-9._%+-]+@(gmail|hotmail|outlook|icloud|yahoo|live|prodigy|tecnm)\.(com|net|org|mx|es)$"
+                        placeholder="Ej: correo@gmail.com">
+                    
+                    <div *ngIf="emailBiz.invalid && (emailBiz.dirty || emailBiz.touched)" style="color: #e74c3c; font-size: 0.8rem; margin-top: 4px;">
+                        <span *ngIf="emailBiz.errors?.['pattern']">Por favor, ingresa un correo con dominio válido (ej. @gmail.com).</span>
+                    </div>
                 </div>
+
                 <div class="form-group full-width">
-                    <label>Descripción</label>
-                    <textarea id="bizDesc" rows="3"></textarea>
+                    <label for="bizDesc">Descripción</label>
+                    <textarea id="bizDesc" name="descripcion_empresa" [(ngModel)]="tempNegocio.descripcion_empresa" rows="3" placeholder="Cuéntanos más sobre tu negocio..."></textarea>
                 </div>
                 
                 <div class="form-group full-width">
                     <label><i class="bi bi-images"></i> Fotos del Negocio</label>
                     <div class="upload-container">
-                        <input type="file" id="bizPhotos" multiple accept="image/*">
+                        <input type="file" id="bizPhotos" accept="image/*" (change)="onFotoSelected($event)">
+                        <p class="help-text" style="font-size: 0.8rem; color: #666; margin-top: 5px;">
+                            Adjunta imagenes de tu negocio.
+                        </p>
                         <div id="previewContainer" class="preview-grid"></div>
                     </div>
                 </div>
 
+                <div class="form-group full-width">
+                    <label><i class="bi bi-card-heading"></i> INE del representante</label>
+                    <div class="upload-container">
+                        <input type="file" id="bizIne" accept="image/*,.pdf" (change)="onIneSelected($event)">
+                        <p class="help-text" style="font-size: 0.8rem; color: #666; margin-top: 5px;">
+                            Adjunta una copia legible de tu identificación oficial.
+                        </p>
+                    </div>
+                </div>
+
                 <div class="form-actions">
-                    <button type="submit" class="btn-save-biz">Guardar Negocio</button>
+                    <button type="button" class="btn-save-biz" (click)="confirmarRegistro()">Guardar Negocio</button>
                 </div>
             </form>
         </div>
 
-        <div id="detailsView" class="biz-card anim-pop" style="display: none;"></div>
+        <div id="detailsView" class="biz-card anim-pop" style="display: none;">
+            </div>
+
+            <div class="edit-profile-container anim-pop" id="editProfileSectionBiz" style="display: none;">
+    <div class="edit-card">
+        <div class="edit-header">
+            <h2>Configuración del Perfil</h2>
+            <p>Gestiona tu información personal</p>
+        </div>
+
+        <form class="edit-form">
+            <div class="form-group">
+                <label><i class="bi bi-person"></i> Nombre Completo</label>
+                <input type="text" name="editName" [(ngModel)]="nombreDisplay">
+            </div>
+
+            <div class="form-group">
+                <label><i class="bi bi-envelope"></i> Correo Electrónico</label>
+                <input type="email" name="editEmail" [(ngModel)]="correoDisplay">
+            </div>
+
+            <div class="form-group">
+                <label><i class="bi bi-telephone"></i> Teléfono</label>
+                <input type="tel" name="editPhone" [(ngModel)]="telefonoDisplay">
+            </div>
+
+            <div class="form-group">
+                <label><i class="bi bi-shield-lock"></i> Contraseña</label>
+                <div class="input-password-wrapper">
+                    <input [type]="mostrarPassword ? 'text' : 'password'"
+                           name="editpassword"
+                           [(ngModel)]="passwordDisplay">
+                    <button type="button" class="btn-toggle-password" (click)="mostrarPassword = !mostrarPassword">
+                        <i class="bi" [ngClass]="mostrarPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn-cancel" id="btnCancelEditBiz">Cancelar</button>
+                <button type="button" class="btn-save" id="btnSaveEditBiz">Guardar Cambios</button>
+            </div>
+        </form>
+    </div>
+</div>
+
     </main>
+</div>
+
+
+<div class="modal-overlay" *ngIf="mostrarConfirmacion">
+    <div class="modal-card anim-pop">
+        <div class="modal-header-green"></div>
+        
+        <div class="modal-body">
+            <h3>¿Estás seguro de que los datos son correctos?</h3>
+            
+            <div class="warning-icon">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+            </div>
+
+            <div class="data-preview-box">
+                <p><strong>Nombre:</strong> {{ tempNegocio.nombre_empresa }}</p>
+                <p><strong>Categoría:</strong> {{ tempNegocio.categoria_empresa }}</p>
+                <p><strong>Horario:</strong> {{ tempNegocio.horario_empresa }}</p>
+                <p><strong>Teléfono:</strong> {{ tempNegocio.telefono_empresa }}</p>
+                <p><strong>Correo:</strong> {{ tempNegocio.correo_empresa }}</p>
+                
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn-cancelar" (click)="mostrarConfirmacion = false">Cancelar</button>
+                <button class="btn-continuar" (click)="guardarFinal()">Continuar</button>
+            </div>
+        </div>
+    </div>
 </div>

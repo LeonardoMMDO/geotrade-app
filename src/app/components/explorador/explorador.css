@@ -447,3 +447,29 @@ body {
     align-items: center;
     padding: 20px;
 }
+
+.input-password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-password-wrapper input {
+    width: 100%;
+    padding-right: 40px;
+}
+
+.btn-toggle-password {
+    position: absolute;
+    right: 10px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #555;
+    font-size: 1rem;
+    padding: 0;
+}
+
+.btn-toggle-password:hover {
+    color: #000;
+}

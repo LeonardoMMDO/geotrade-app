@@ -1,7 +1,8 @@
 import { Component } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
-import { FormsModule, NgForm } from '@angular/forms'; // Aseguramos la importación de NgForm
+import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { UsuarioService } from '../../services/usuario.service';
 
 @Component({
   selector: 'app-login',
@@ -10,25 +11,44 @@ import { CommonModule } from '@angular/common';
   templateUrl: './login.html',
   styleUrl: './login.css',
 })
-export class LoginComponent { 
+export class LoginComponent {  
   
   loginData = {
     correo: '',
     pass: ''
   };
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private usuarioService: UsuarioService) {}
 
-  // Definimos explícitamente que la función recibe un parámetro de tipo NgForm
-  iniciarSesion(form: NgForm) {
-    // Si el formulario no cumple con los 'required', salimos de la función
-    // Esto permite que el navegador muestre el globito de "Completa este campo" 🎈
-    if (form.invalid) {
-      return; 
-    }
+  iniciarSesion(form: any) {
+  if (form.valid) {
+    this.usuarioService.login(this.loginData).subscribe({
+      next: (usuarioRecibido) => {
+        if (usuarioRecibido) {
+          localStorage.setItem('usuario', JSON.stringify(usuarioRecibido));
+          localStorage.setItem('nombreUsuario', usuarioRecibido.nombre);
+          localStorage.setItem('correoUsuario', this.loginData.correo);
+          localStorage.setItem('telefonoUsuario', usuarioRecibido.telefono || '');
+          localStorage.setItem('passwordUsuario', usuarioRecibido.pass || '');
 
-    // Si los datos son válidos, imprimimos en consola y navegamos
-    console.log("Datos válidos:", this.loginData);
-    this.router.navigate(['/explorador']); 
+          // Redirige según el rol que venga de la BD
+          const rutas: Record<string, string> = {
+            'admin':      '/admin',
+            'empresario': '/dashboard-empresario',
+            'explorador': '/explorador'
+          };
+
+          const ruta = rutas[usuarioRecibido.rol] ?? '/explorador';
+          this.router.navigate([ruta]);
+        }
+      },
+      error: (err) => {
+        alert("¡Datos incorrectos!");
+        console.error("Error en login:", err);
+      }
+    });
+  } else {
+    alert("Por favor, rellena todos los campos.");
   }
+}
 }
