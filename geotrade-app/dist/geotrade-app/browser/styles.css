@@ -1,0 +1,25 @@
+@import "https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap";
+
+/* src/styles.css */
+:root {
+  --primary-biz: #2c3e50;
+  --accent-biz: #3498db;
+  --success: #27ae60;
+  --bg-light: #f4f7f6;
+  --white: #ffffff;
+  --dark-blue: #1a2a3a;
+  --light-blue: #a3c1e0;
+}
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Montserrat", sans-serif;
+}
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/* angular:styles/global:styles */
+/*# sourceMappingURL=styles.css.map */

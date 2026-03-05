@@ -1,0 +1,9 @@
+com\geotrade\backend\BackendApplication.class
+com\geotrade\backend\model\Negocio.class
+com\geotrade\backend\repository\NegocioRepository.class
+com\geotrade\backend\MvcConfig.class
+com\geotrade\backend\repository\UsuarioRepository.class
+com\geotrade\backend\controller\NegocioController.class
+com\geotrade\backend\SecurityConfig.class
+com\geotrade\backend\controller\UsuarioController.class
+com\geotrade\backend\model\Usuario.class
