@@ -1,0 +1,28 @@
+/* src/styles.css */
+
+/* Importación de Fuente */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+
+/* Variables para reutilizar en toda la app */
+:root {
+    --primary-biz: #2c3e50;
+    --accent-biz: #3498db;
+    --success: #27ae60;
+    --bg-light: #f4f7f6;
+    --white: #ffffff;
+    --dark-blue: #1a2a3a; /* El azul oscuro de tu navbar */
+    --light-blue: #a3c1e0; /* El azul claro de tus iconos */
+}
+
+/* Reset Universal */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Montserrat', sans-serif;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+}

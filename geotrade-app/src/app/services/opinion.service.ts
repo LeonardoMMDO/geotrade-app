@@ -1,0 +1,26 @@
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class OpinionService {
+  private apiUrl = 'http://localhost:8080/api/opiniones';
+
+  constructor(private http: HttpClient) { }
+
+  /**
+   * Obtiene opiniones por lugarId.
+   */
+  getOpinions(lugarId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/${encodeURIComponent(lugarId)}`);
+  }
+
+  /**
+   * Guarda una nueva opinión. El objeto debe contener {lugarId, calificacion, texto} y usuarioId como param.
+   */
+  saveOpinion(opinion: any, usuarioId: number): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}?usuarioId=${usuarioId}`, opinion);
+  }
+}
