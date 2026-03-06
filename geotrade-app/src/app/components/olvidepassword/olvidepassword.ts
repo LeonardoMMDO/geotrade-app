@@ -8,7 +8,7 @@ import { finalize } from 'rxjs/operators';
 @Component({
   selector: 'app-olvidepassword',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule],
   templateUrl: './olvidepassword.html',
   styleUrl: './olvidepassword.css'
 })

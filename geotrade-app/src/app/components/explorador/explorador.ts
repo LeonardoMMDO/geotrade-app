@@ -6,8 +6,12 @@ import { NgClass, CommonModule } from '@angular/common';
 import { GoogleMapsLoaderService } from '../../services/google-maps-loader.service';
 import { NegocioService } from '../../services/negocio.service';
 import { OpinionService } from '../../services/opinion.service';
+import { SucursalService } from '../../services/sucursal.service';
 import { Negocio } from '../../model/negocio';
 import { CATEGORIES } from '../../model/categories';
+import { Sucursal } from '../../model/sucursal';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 
 @Component({
@@ -27,6 +31,24 @@ import { CATEGORIES } from '../../model/categories';
 })
 
 export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
+  private readonly bizMarkerByCategory: { [key: string]: { glyph: string; color: string } } = {
+    restaurante: { glyph: '🍽️', color: '#e67e22' },
+    abarrotes: { glyph: '🛒', color: '#27ae60' },
+    estetica: { glyph: '✂️', color: '#e84393' },
+    ferreteria: { glyph: '🔧', color: '#7f8c8d' },
+    panaderia: { glyph: '🥖', color: '#d35400' },
+    papeleria: { glyph: '📚', color: '#2980b9' },
+    farmacia: { glyph: '💊', color: '#c0392b' },
+    farmacias: { glyph: '💊', color: '#c0392b' },
+    gym: { glyph: '🏋️', color: '#1f7a8c' },
+    floreria: { glyph: '🌸', color: '#d63384' },
+    boutique: { glyph: '👜', color: '#6f42c1' },
+    veterinaria: { glyph: '🐾', color: '#16a085' },
+    veterinarias: { glyph: '🐾', color: '#16a085' },
+    refaccionaria: { glyph: '🚗', color: '#34495e' },
+    refaccionarias: { glyph: '🚗', color: '#34495e' }
+  };
+
   // --- GOOGLE MAPS ---
   @ViewChild('mapContainer', { static: false }) mapElement!: ElementRef;
   map!: google.maps.Map;
@@ -48,6 +70,7 @@ export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
   currentStepIndex: number = 0;
   showPlaceDetail: boolean = false;
   showCategories: boolean = true;
+  private searchToken = 0;
 
   // --- USER DATA ---
   nombreDisplay: string = '';
@@ -75,6 +98,7 @@ export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
     private ngZone: NgZone,
     private negocioService: NegocioService,
     private opinionService: OpinionService,
+    private sucursalService: SucursalService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -300,6 +324,7 @@ export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   buscarLugares(tipo: string) {
+    const currentToken = ++this.searchToken;
     // console.log('buscando lugares para', tipo);
     if (!this.map) {
       console.warn('mapa no inicializado');
@@ -313,20 +338,26 @@ export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
       restaurantes: 'restaurant',
       refaccionarias: 'car_repair',
       estética: 'beauty_salon',
+      estetica: 'beauty_salon',
       abarrotes: 'grocery_or_supermarket',
-      consultorios: 'doctor',
-      'servicios a domicilio': 'plumber',
-      escuelas: 'school',
-      hospedajes: 'lodging',
+      farmacias: 'pharmacy',
+      farmacia: 'pharmacy',
+      gym: 'gym',
+      florería: 'florist',
+      floreria: 'florist',
+      boutique: 'clothing_store',
       papelerías: 'book_store',
+      papelerias: 'book_store',
       veterinarias: 'veterinary_care'
     };
+    const tipoNormalizado = this.normalizeCategoryName(tipo);
     const request: google.maps.places.PlaceSearchRequest = {
       location: { lat: this.lat, lng: this.lng },
       radius: 2000,
-      type: mapping[tipo] || 'store'
+      type: mapping[tipo] || mapping[tipoNormalizado] || 'store'
     };
     service.nearbySearch(request, (results, status) => {
+      if (currentToken !== this.searchToken) return;
       if (status === google.maps.places.PlacesServiceStatus.OK && results) {
         // console.log(`encontrados ${results.length} lugares de tipo "${tipo}"`);
         results.forEach((place) => {
@@ -349,15 +380,59 @@ export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
     // Also show user-submitted negocios from backend that match this category
     this.negocioService.getNegociosPublicos().subscribe({
       next: (lista) => {
+        if (currentToken !== this.searchToken) return;
         lista.forEach((biz: Negocio) => {
           // require lat/lng to show on map
           if (biz.latitud != null && biz.longitud != null) {
-            const bizCategory = (biz.categoria_empresa || '').toLowerCase();
-            if (bizCategory.includes(tipo) || tipo.includes(bizCategory) || bizCategory === tipo) {
+            const bizCategory = this.normalizeCategoryName(biz.categoria_empresa || '');
+            if (bizCategory.includes(tipoNormalizado) || tipoNormalizado.includes(bizCategory) || bizCategory === tipoNormalizado) {
               const pos = new google.maps.LatLng(biz.latitud!, biz.longitud!);
-              const marker = new google.maps.Marker({ position: pos, map: this.map, title: biz.nombre_empresa });
+              
+              const marker = new google.maps.Marker({
+                position: pos,
+                map: this.map,
+                title: biz.nombre_empresa,
+                icon: this.getBizMarkerIcon(biz.categoria_empresa),
+                zIndex: 999 // Mostrar muy por encima de Google Places
+              });
+              
               marker.addListener('click', () => this.ngZone.run(() => this.showNegocioDetail(biz)));
               this.markers.push(marker);
+
+              // También pintar sucursales del negocio registrado
+              const idNegocio = (biz.id || (biz as any).id_negocio) as number;
+              if (idNegocio) {
+                this.sucursalService.getSucursalesByNegocio(idNegocio).subscribe({
+                  next: (sucursales: Sucursal[]) => {
+                    if (currentToken !== this.searchToken) return;
+                    (sucursales || []).forEach((sucursal, idx) => {
+                      if (sucursal.latitud == null || sucursal.longitud == null) return;
+                      const posSucursal = new google.maps.LatLng(sucursal.latitud, sucursal.longitud);
+                      const markerSucursal = new google.maps.Marker({
+                        position: posSucursal,
+                        map: this.map,
+                        title: `${biz.nombre_empresa} - Sucursal ${idx + 1}`,
+                        icon: this.getBizMarkerIcon(biz.categoria_empresa),
+                        zIndex: 998
+                      });
+
+                      const negocioSucursal: Negocio = {
+                        ...biz,
+                        direccion_empresa: sucursal.direccion || biz.direccion_empresa,
+                        latitud: sucursal.latitud,
+                        longitud: sucursal.longitud,
+                        nombre_empresa: `${biz.nombre_empresa} - Sucursal ${idx + 1}`
+                      };
+                      (negocioSucursal as any).idSucursal = sucursal.idSucursal;
+                      (negocioSucursal as any).esSucursal = true;
+
+                      markerSucursal.addListener('click', () => this.ngZone.run(() => this.showNegocioDetail(negocioSucursal)));
+                      this.markers.push(markerSucursal);
+                    });
+                  },
+                  error: (err) => console.warn('No se pudieron cargar sucursales del negocio', err)
+                });
+              }
             }
           }
         });
@@ -558,6 +633,39 @@ export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
     window.location.href = tel;
   }
 
+  private normalizeCategoryName(value: string | null | undefined): string {
+    return (value || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim();
+  }
+
+  private getBizMarkerIcon(categoria: string | null | undefined): google.maps.Icon {
+    const normalized = this.normalizeCategoryName(categoria);
+    const matched = Object.keys(this.bizMarkerByCategory).find((key) => normalized.includes(key));
+    const markerStyle = this.bizMarkerByCategory[matched || ''] || { glyph: '🏪', color: '#e74c3c' };
+
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" viewBox="0 0 72 72">
+        <defs>
+          <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="rgba(0,0,0,0.35)"/>
+          </filter>
+        </defs>
+        <circle cx="36" cy="36" r="30" fill="${markerStyle.color}" opacity="0.22"/>
+        <circle cx="36" cy="36" r="24" fill="#ffffff" stroke="${markerStyle.color}" stroke-width="4" filter="url(#shadow)"/>
+        <text x="36" y="39" text-anchor="middle" font-size="24" font-family="Segoe UI Emoji, Noto Color Emoji, Arial" dominant-baseline="middle">${markerStyle.glyph}</text>
+      </svg>
+    `;
+
+    return {
+      url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
+      scaledSize: new google.maps.Size(56, 56),
+      anchor: new google.maps.Point(28, 28)
+    };
+  }
+
   getBizPhotoUrl(biz: Negocio | null): string | null {
     if (!biz || !biz.fotos_url_empresa) return null;
     const parts = biz.fotos_url_empresa.split(',').filter(p => p && p.trim());
@@ -603,17 +711,60 @@ export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   // ===== OPINIONES / REVIEWS =====
+  private getOpinionFetchKeys(): string[] {
+    if (this.selectedPlace?.place_id) {
+      return [this.selectedPlace.place_id];
+    }
+
+    if (!this.selectedBiz) return [];
+
+    const sucursalId = (this.selectedBiz as any).idSucursal as number | undefined;
+    if (sucursalId) {
+      return [`sucursal:${sucursalId}`];
+    }
+
+    const idNegocio = this.selectedBiz.id;
+    if (idNegocio == null) return [];
+    // Mantener compatibilidad con opiniones viejas guardadas solo con "id"
+    return [`negocio:${idNegocio}`, String(idNegocio)];
+  }
+
+  private getOpinionSaveKey(): string | null {
+    if (this.selectedPlace?.place_id) {
+      return this.selectedPlace.place_id;
+    }
+
+    if (!this.selectedBiz) return null;
+
+    const sucursalId = (this.selectedBiz as any).idSucursal as number | undefined;
+    if (sucursalId) {
+      return `sucursal:${sucursalId}`;
+    }
+
+    if (this.selectedBiz.id == null) return null;
+    return `negocio:${this.selectedBiz.id}`;
+  }
+
   openReviewsModal() {
     this.showReviewsModal = true;
-    // fetch reviews from backend using place_id or negocio id
-    const id = this.selectedPlace?.place_id || this.selectedBiz?.id?.toString();
-    if (!id) {
+    const keys = this.getOpinionFetchKeys();
+    if (!keys.length) {
       this.placeReviews = [];
       return;
     }
-    this.opinionService.getOpinions(id).subscribe({
-      next: data => {
-        this.placeReviews = (data || []).map(op => ({
+
+    forkJoin(
+      keys.map((k) => this.opinionService.getOpinions(k).pipe(catchError(() => of([]))))
+    ).subscribe({
+      next: (groups) => {
+        const merged = (groups || []).flat();
+        const dedup = new Map<string, any>();
+        merged.forEach((item: any) => {
+          const key = String(item.id ?? '') + '|' + String(item.usuarioId ?? '') + '|' + String(item.texto ?? '');
+          if (!dedup.has(key)) dedup.set(key, item);
+        });
+
+        this.placeReviews = Array.from(dedup.values()).map(op => ({
           userName: op.usuarioNombre || 'Usuario anónimo',
           rating: op.calificacion,
           text: op.texto,
@@ -642,7 +793,7 @@ export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    const lugarId = this.selectedPlace?.place_id || this.selectedBiz?.id?.toString();
+    const lugarId = this.getOpinionSaveKey();
     if (!lugarId) {
       alert('No se pudo identificar el lugar.');
       return;

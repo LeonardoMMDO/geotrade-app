@@ -8,6 +8,7 @@ export interface Negocio {
     horario_empresa: string;
     correo_empresa: string;
     descripcion_empresa: string;
+    logo_url_empresa?: string;      // Nueva: foto/logo de perfil de empresa
     fotos_url_empresa: string;
     ine_url_representante: string;
     latitud?: number;

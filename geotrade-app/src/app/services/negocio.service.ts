@@ -19,19 +19,23 @@ export class NegocioService {
     return this.http.get<any[]>(`${this.apiUrl}/publicos`);
   }
 
-  registrarNegocio(negocio: any, archivosFotos?: File[], archivoIne?: File): Observable<any> {
+  registrarNegocio(negocio: any, archivoLogo?: File, archivosFotos?: File[], archivosIne?: File[]): Observable<any> {
     const formData = new FormData();
 
     formData.append('negocio', new Blob([JSON.stringify(negocio)], {
       type: 'application/json'
     }));
 
-    if (archivosFotos && archivosFotos.length) {
-      archivosFotos.forEach((f, idx) => formData.append('archivos', f));
+    if (archivoLogo) {
+      formData.append('archivoLogo', archivoLogo);
     }
 
-    if (archivoIne) {
-      formData.append('archivoIne', archivoIne);
+    if (archivosFotos && archivosFotos.length) {
+      archivosFotos.forEach((f) => formData.append('archivos', f));
+    }
+
+    if (archivosIne && archivosIne.length) {
+      archivosIne.forEach((f) => formData.append('archivosIne', f));
     }
 
     return this.http.post<any>(this.apiUrl, formData);
@@ -42,17 +46,24 @@ export class NegocioService {
     return this.http.delete(`${this.apiUrl}/${id}`);
   }
 
-actualizarNegocio(id: number, negocio: any, archivosFotos?: File[], archivoIne?: File): Observable<any> {
+actualizarNegocio(id: number, negocio: any, archivoLogo?: File, archivosFotos?: File[], archivosIne?: File[]): Observable<any> {
     const formData = new FormData();
     
     formData.append('negocio', new Blob([JSON.stringify(negocio)], {
         type: 'application/json'
     }));
 
+    if (archivoLogo) {
+      formData.append('archivoLogo', archivoLogo);
+    }
+
     if (archivosFotos && archivosFotos.length) {
       archivosFotos.forEach(f => formData.append('archivos', f));
     }
-    if (archivoIne) formData.append('archivoIne', archivoIne);
+
+    if (archivosIne && archivosIne.length) {
+      archivosIne.forEach(f => formData.append('archivosIne', f));
+    }
 
     return this.http.put<any>(`${this.apiUrl}/${id}`, formData);
 }

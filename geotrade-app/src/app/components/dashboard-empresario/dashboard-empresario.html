@@ -56,7 +56,7 @@
         <div *ngFor="let biz of negocios" 
              class="biz-item" 
              (click)="mostrarDetallesDinamicos(biz)">
-            <i class="bi bi-shop"></i>
+            <i [ngClass]="getCategoriaIconClass(biz.categoria_empresa)"></i>
             <div class="biz-info-short">
                 <span class="biz-name">{{ biz.nombre_empresa }}</span>
                 <span class="biz-status"> - Activo</span>
@@ -101,7 +101,15 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="bizAddress">Dirección</label>
-                        <input type="text" id="bizAddress" name="direccion_empresa" [(ngModel)]="tempNegocio.direccion_empresa">
+                        <div class="address-input-group">
+                            <input type="text" id="bizAddress" name="direccion_empresa" [(ngModel)]="tempNegocio.direccion_empresa" readonly placeholder="Selecciona ubicación en el mapa">
+                            <button type="button" class="btn-open-map" (click)="abrirSelectorUbicacion()">
+                                <i class="bi bi-geo-alt"></i> Mapa
+                            </button>
+                        </div>
+                        <p *ngIf="tempNegocio.latitud && tempNegocio.longitud" class="coords-display">
+                            📍 {{ tempNegocio.latitud!.toFixed(4) }}, {{ tempNegocio.longitud!.toFixed(4) }}
+                        </p>
                     </div>
 
                     <br><br>
@@ -133,25 +141,27 @@
                     <label for="bizDesc">Descripción</label>
                     <textarea id="bizDesc" name="descripcion_empresa" [(ngModel)]="tempNegocio.descripcion_empresa" rows="3" placeholder="Cuéntanos más sobre tu negocio..."></textarea>
                 </div>
-                
+
+
                 <div class="form-group full-width">
                     <label><i class="bi bi-images"></i> Fotos del Negocio</label>
                     <div class="upload-container">
                         <input type="file" id="bizPhotos" accept="image/*" multiple (change)="onFotoSelected($event)">
                         <p class="help-text" style="font-size: 0.8rem; color: #666; margin-top: 5px;">
-                            Adjunta imagenes de tu negocio.
+                            Adjunta varias imágenes de tu negocio. <strong>La primera foto se usará como miniatura adicional.</strong>
                         </p>
                         <div id="previewContainer" class="preview-grid"></div>
                     </div>
                 </div>
 
                 <div class="form-group full-width">
-                    <label><i class="bi bi-card-heading"></i> INE del representante</label>
+                    <label><i class="bi bi-card-heading"></i> INE del Representante</label>
                     <div class="upload-container">
-                        <input type="file" id="bizIne" accept="image/*,.pdf" (change)="onIneSelected($event)">
+                        <input type="file" id="bizIne" accept="image/*,.pdf" multiple (change)="onIneSelected($event)">
                         <p class="help-text" style="font-size: 0.8rem; color: #666; margin-top: 5px;">
-                            Adjunta una copia legible de tu identificación oficial.
+                            Adjunta una o más copias legibles de tu identificación oficial (frente y/o reverso).
                         </p>
+                        <div id="inePreviewContainer" class="preview-grid" style="margin-top: 10px;"></div>
                     </div>
                 </div>
 
@@ -210,6 +220,46 @@
     </main>
 </div>
 
+<!-- Modal Selector de Ubicación (global para registro y edición) -->
+<div *ngIf="mostrarSelectorUbicacion" class="location-picker-overlay" (click)="cerrarSelectorUbicacion()">
+    <div class="location-picker-modal" (click)="$event.stopPropagation()">
+        <div class="picker-header">
+            <h3><i class="bi bi-map"></i> Selecciona la ubicación de tu negocio</h3>
+            <button type="button" class="btn-close" (click)="cerrarSelectorUbicacion()">✕</button>
+        </div>
+
+        <div class="picker-search">
+            <input type="text"
+                   id="searchBoxEmpresario"
+                   placeholder="Busca tu negocio o dirección..."
+                   class="search-input">
+        </div>
+
+        <div id="miniMapaEmpresario" class="mini-mapa"></div>
+
+        <div class="picker-footer">
+            <p *ngIf="(modoSucursalUbicacion && sucursalDraft?.latitud) || (!modoSucursalUbicacion && tempNegocio.latitud)" class="selected-coords">
+                ✓ Ubicación seleccionada:
+                {{ modoSucursalUbicacion ? (sucursalDraft!.latitud!.toFixed(6) + ', ' + sucursalDraft!.longitud!.toFixed(6)) : (tempNegocio.latitud!.toFixed(6) + ', ' + tempNegocio.longitud!.toFixed(6)) }}
+            </p>
+            <button type="button" class="btn-confirm-location" (click)="confirmarUbicacion()">
+                Confirmar Ubicación
+            </button>
+        </div>
+    </div>
+</div>
+
+<div *ngIf="mostrarToastConfirmSucursal" class="toast-branch-confirm">
+    <div class="toast-branch-card">
+        <p><strong>¿La ubicación de la sucursal es correcta?</strong></p>
+        <p class="toast-branch-sub">{{ sucursalDraft?.direccion || 'Dirección seleccionada en mapa' }}</p>
+        <div class="toast-branch-actions">
+            <button type="button" class="btn-toast-no" (click)="cancelarGuardarSucursal()">No</button>
+            <button type="button" class="btn-toast-yes" (click)="confirmarGuardarSucursal()">Sí, guardar</button>
+        </div>
+    </div>
+</div>
+
 
 <div class="modal-overlay" *ngIf="mostrarConfirmacion">
     <div class="modal-card anim-pop">
@@ -236,5 +286,87 @@
                 <button class="btn-continuar" (click)="guardarFinal()">Continuar</button>
             </div>
         </div>
+    </div>
+</div>
+
+<div class="biz-metrics-overlay" *ngIf="mostrarMetricasNegocio" (click)="cerrarMetricasNegocio()">
+    <div class="biz-metrics-modal anim-pop" (click)="$event.stopPropagation()">
+        <div class="biz-metrics-header">
+            <h3><i class="bi bi-graph-up-arrow"></i> {{ tituloMetricasContexto }}</h3>
+            <button type="button" class="btn-close-metrics" (click)="cerrarMetricasNegocio()">&times;</button>
+        </div>
+
+        <div class="biz-metrics-body" *ngIf="!cargandoMetricas; else loadingMetrics">
+            <div class="metrics-cards-grid">
+                <div class="metric-card">
+                    <p class="metric-label">Reseñas</p>
+                    <p class="metric-value">{{ totalOpinionesNegocio }}</p>
+                </div>
+                <div class="metric-card">
+                    <p class="metric-label">Calificación promedio</p>
+                    <p class="metric-value">{{ promedioCalificacionNegocio ? (promedioCalificacionNegocio | number:'1.1-2') : '0.0' }} / 5</p>
+                </div>
+            </div>
+
+            <div class="metrics-reviews-list" *ngIf="opinionesNegocioActual.length > 0; else emptyReviews">
+                <div class="metric-review-item" *ngFor="let item of opinionesNegocioActual">
+                    <div class="metric-review-top">
+                        <strong>{{ item.usuarioNombre || 'Usuario' }}</strong>
+                        <span class="metric-review-rating">{{ item.calificacion }} ★</span>
+                    </div>
+                    <p class="metric-review-text">{{ item.texto || 'Sin comentario' }}</p>
+                    <small class="metric-review-date">{{ formatearFechaOpinion(item.fechaCreacion) }}</small>
+                </div>
+            </div>
+
+            <ng-template #emptyReviews>
+                <p class="metrics-empty">Aún no hay reseñas para este punto.</p>
+            </ng-template>
+        </div>
+
+        <ng-template #loadingMetrics>
+            <div class="metrics-loading">Cargando opiniones...</div>
+        </ng-template>
+    </div>
+</div>
+
+<div class="biz-metrics-overlay" *ngIf="mostrarOpinionesContexto" (click)="cerrarOpinionesContexto()">
+    <div class="biz-metrics-modal anim-pop" (click)="$event.stopPropagation()">
+        <div class="biz-metrics-header">
+            <h3><i class="bi bi-chat-left-text-fill"></i> {{ tituloOpinionesContexto }}</h3>
+            <button type="button" class="btn-close-metrics" (click)="cerrarOpinionesContexto()">&times;</button>
+        </div>
+
+        <div class="biz-metrics-body" *ngIf="!cargandoOpinionesContexto; else loadingCtxReviews">
+            <div class="metrics-cards-grid">
+                <div class="metric-card">
+                    <p class="metric-label">Reseñas</p>
+                    <p class="metric-value">{{ totalOpinionesContexto }}</p>
+                </div>
+                <div class="metric-card">
+                    <p class="metric-label">Calificación promedio</p>
+                    <p class="metric-value">{{ promedioOpinionesContexto ? (promedioOpinionesContexto | number:'1.1-2') : '0.0' }} / 5</p>
+                </div>
+            </div>
+
+            <div class="metrics-reviews-list" *ngIf="opinionesContexto.length > 0; else noContextReviews">
+                <div class="metric-review-item" *ngFor="let item of opinionesContexto">
+                    <div class="metric-review-top">
+                        <strong>{{ item.usuarioNombre || 'Usuario' }}</strong>
+                        <span class="metric-review-rating">{{ item.calificacion }} ★</span>
+                    </div>
+                    <p class="metric-review-text">{{ item.texto || 'Sin comentario' }}</p>
+                    <small class="metric-review-date">{{ formatearFechaOpinion(item.fechaCreacion) }}</small>
+                </div>
+            </div>
+
+            <ng-template #noContextReviews>
+                <p class="metrics-empty">Aún no hay reseñas para este punto.</p>
+            </ng-template>
+        </div>
+
+        <ng-template #loadingCtxReviews>
+            <div class="metrics-loading">Cargando opiniones...</div>
+        </ng-template>
     </div>
 </div>
