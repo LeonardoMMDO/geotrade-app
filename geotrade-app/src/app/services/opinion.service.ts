@@ -27,4 +27,12 @@ export class OpinionService {
   saveOpinion(opinion: any, usuarioId: number): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}?usuarioId=${usuarioId}`, opinion);
   }
+
+  deleteOpinion(opinionId: number, usuarioId: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/${opinionId}?usuarioId=${usuarioId}`);
+  }
+
+  deleteOpinionFallback(opinionId: number, usuarioId: number): Observable<any> {
+    return this.http.post(`${this.apiUrl}/${opinionId}/eliminar?usuarioId=${usuarioId}`, {});
+  }
 }

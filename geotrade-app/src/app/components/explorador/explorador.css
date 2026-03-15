@@ -1202,6 +1202,19 @@ body {
     margin: 8px 0;
 }
 
+.review-delete-btn {
+    border: 1px solid #e7b5b5;
+    background: #fff5f5;
+    color: #a43636;
+    padding: 6px 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.review-delete-btn:hover {
+    color: #8d1f1f;
+}
+
 .review-divider {
     border: none;
     border-top: 1px solid #e9ecef;

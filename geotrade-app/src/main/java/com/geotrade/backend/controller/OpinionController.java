@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Map;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -175,5 +176,34 @@ public class OpinionController {
     @GetMapping("/usuario/{usuarioId}")
     public List<Opinion> getOpinionesPorUsuario(@PathVariable Long usuarioId) {
         return opinionRepository.findByUsuarioId(usuarioId);
+    }
+
+    private ResponseEntity<?> eliminarOpinionPropietario(Long opinionId, Long usuarioId) {
+        Optional<Opinion> opinionOpt = opinionRepository.findById(opinionId);
+        if (!opinionOpt.isPresent()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Opinion opinion = opinionOpt.get();
+        if (opinion.getUsuario() == null || opinion.getUsuario().getId() == null) {
+            return ResponseEntity.badRequest().body("La opinión no tiene un usuario asociado.");
+        }
+
+        if (!opinion.getUsuario().getId().equals(usuarioId)) {
+            return ResponseEntity.status(403).body("No puedes eliminar la opinión de otro usuario.");
+        }
+
+        opinionRepository.delete(opinion);
+        return ResponseEntity.ok(Map.of("mensaje", "Opinión eliminada correctamente"));
+    }
+
+    @DeleteMapping("/{opinionId}")
+    public ResponseEntity<?> eliminarOpinion(@PathVariable Long opinionId, @RequestParam Long usuarioId) {
+        return eliminarOpinionPropietario(opinionId, usuarioId);
+    }
+
+    @PostMapping("/{opinionId}/eliminar")
+    public ResponseEntity<?> eliminarOpinionViaPost(@PathVariable Long opinionId, @RequestParam Long usuarioId) {
+        return eliminarOpinionPropietario(opinionId, usuarioId);
     }
 }

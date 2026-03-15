@@ -92,12 +92,15 @@ export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
   isLoadingReviews: boolean = false;
   private reviewsLoadingTimer: ReturnType<typeof setTimeout> | null = null;
   private reviewsRequestToken = 0;
+  reviewToast = { visible: false, message: '', type: 'success' as 'success' | 'error' };
+  reviewDeleteConfirm = { visible: false, review: null as any };
   newReview = {
     rating: 5,
     text: ''
   };
 
   private clickListener: any;
+  private geolocationWatchId: number | null = null;
 
   constructor(
     private usuarioService: UsuarioService,
@@ -258,6 +261,10 @@ export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.clickListener) {
       document.removeEventListener('click', this.clickListener);
     }
+    if (this.geolocationWatchId !== null && navigator.geolocation) {
+      navigator.geolocation.clearWatch(this.geolocationWatchId);
+      this.geolocationWatchId = null;
+    }
     // Clean up all markers when component is destroyed
     this.limpiarMarcadores();
   }
@@ -295,12 +302,41 @@ export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
           this.lat = pos.coords.latitude;
           this.lng = pos.coords.longitude;
           this.cargarMapa();
+          this.iniciarSeguimientoUbicacion();
         },
         () => this.cargarMapa()
       );
     } else {
       this.cargarMapa();
     }
+  }
+
+  private iniciarSeguimientoUbicacion() {
+    if (!navigator.geolocation) return;
+
+    if (this.geolocationWatchId !== null) {
+      navigator.geolocation.clearWatch(this.geolocationWatchId);
+      this.geolocationWatchId = null;
+    }
+
+    this.geolocationWatchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        this.lat = pos.coords.latitude;
+        this.lng = pos.coords.longitude;
+
+        if (this.userMarker) {
+          this.userMarker.setPosition({ lat: this.lat, lng: this.lng });
+        }
+      },
+      (error) => {
+        console.warn('No se pudo actualizar la ubicación en tiempo real:', error.message);
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 0,
+        timeout: 10000
+      }
+    );
   }
 
   cargarMapa() {
@@ -313,7 +349,21 @@ export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
       center: coords,
       zoom: 15,
       mapTypeId: google.maps.MapTypeId.ROADMAP,
-      disableDefaultUI: false
+      disableDefaultUI: false,
+      styles: [
+        { featureType: 'landscape.natural', elementType: 'geometry.fill',
+          stylers: [{ visibility: 'on' }, { color: '#e0efef' }] },
+        { featureType: 'poi', elementType: 'geometry.fill',
+          stylers: [{ visibility: 'on' }, { hue: '#1900ff' }, { color: '#c0e8e8' }] },
+        { featureType: 'road', elementType: 'geometry',
+          stylers: [{ lightness: 100 }, { visibility: 'simplified' }] },
+        { featureType: 'road', elementType: 'labels',
+          stylers: [{ visibility: 'on' }] },
+        { featureType: 'transit.line', elementType: 'geometry',
+          stylers: [{ visibility: 'on' }, { lightness: 700 }] },
+        { featureType: 'water', elementType: 'all',
+          stylers: [{ color: '#7dcdcd' }] }
+      ]
     };
     this.map = new google.maps.Map(el, options);
     // create permanent user location marker
@@ -711,6 +761,20 @@ export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
     return typeof summary === 'string' ? summary.trim() : '';
   }
 
+  getTodayHours(): string | null {
+    try {
+      const oh = (this.selectedPlace as any)?.opening_hours;
+      if (!oh?.weekday_text?.length) return null;
+      const dayIndex = new Date().getDay();
+      const adjusted = (dayIndex + 6) % 7;
+      const line: string = oh.weekday_text[adjusted] || '';
+      const colonIdx = line.indexOf(':');
+      return colonIdx >= 0 ? line.slice(colonIdx + 1).trim() : line.trim();
+    } catch {
+      return null;
+    }
+  }
+
   private sincronizarViewport(): void {
     this.isMobileScreen = window.innerWidth <= 991;
 
@@ -938,6 +1002,8 @@ export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
         });
 
         this.placeReviews = Array.from(dedup.values()).map(op => ({
+          id: op.id,
+          usuarioId: op.usuarioId,
           userName: op.usuarioNombre || 'Usuario anónimo',
           rating: op.calificacion,
           text: op.texto,
@@ -986,18 +1052,18 @@ export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   submitReview() {
     if (!this.newReview.text.trim()) {
-      alert('Por favor escribe una opinión.');
+      this.mostrarReviewToast('Por favor escribe una opinión.', 'error');
       return;
     }
 
     if (!this.usuarioId) {
-      alert('Debes estar logueado para enviar una opinión.');
+      this.mostrarReviewToast('Debes estar logueado para enviar una opinión.', 'error');
       return;
     }
 
     const lugarId = this.getOpinionSaveKey();
     if (!lugarId) {
-      alert('No se pudo identificar el lugar.');
+      this.mostrarReviewToast('No se pudo identificar el lugar.', 'error');
       return;
     }
 
@@ -1009,19 +1075,80 @@ export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.opinionService.saveOpinion(opinion, this.usuarioId).subscribe({
       next: saved => {
-        // prepend to list so it appears immediately
         this.placeReviews.unshift({
+          id: saved.id,
+          usuarioId: saved.usuarioId,
           userName: this.nombreDisplay || 'Usuario',
           rating: saved.calificacion,
           text: saved.texto,
           timestamp: saved.fechaCreacion
         });
         this.newReview = { rating: 5, text: '' };
-        alert('¡Gracias por tu opinión!');
+        this.mostrarReviewToast('¡Gracias por tu opinión!', 'success');
       },
       error: err => {
         console.error('Error guardando opinión', err);
-        alert('Error al guardar la opinión. Inténtalo de nuevo.');
+        this.mostrarReviewToast('Error al guardar la opinión. Inténtalo de nuevo.', 'error');
+      }
+    });
+  }
+
+  private mostrarReviewToast(message: string, type: 'success' | 'error') {
+    this.reviewToast = { visible: true, message, type };
+    this.cdr.markForCheck();
+    setTimeout(() => {
+      this.reviewToast.visible = false;
+      this.cdr.markForCheck();
+    }, 3500);
+  }
+
+  canDeleteReview(review: any): boolean {
+    if (!this.usuarioId) return false;
+    return Number(review?.usuarioId) === Number(this.usuarioId);
+  }
+
+  requestDeleteReview(review: any): void {
+    if (!this.usuarioId || !review?.id) {
+      this.mostrarReviewToast('No se pudo identificar la opinión.', 'error');
+      return;
+    }
+    this.reviewDeleteConfirm = { visible: true, review };
+    this.cdr.markForCheck();
+  }
+
+  cancelarDeleteReview(): void {
+    this.reviewDeleteConfirm = { visible: false, review: null };
+    this.cdr.markForCheck();
+  }
+
+  confirmarDeleteReview(): void {
+    const review = this.reviewDeleteConfirm.review;
+    this.reviewDeleteConfirm = { visible: false, review: null };
+    this.deleteReview(review);
+  }
+
+  deleteReview(review: any): void {
+    this.opinionService.deleteOpinion(review.id, this.usuarioId!).subscribe({
+      next: () => {
+        this.placeReviews = this.placeReviews.filter(r => Number(r.id) !== Number(review.id));
+        this.mostrarReviewToast('Opinión eliminada correctamente.', 'success');
+      },
+      error: (err) => {
+        if (err?.status === 405) {
+          this.opinionService.deleteOpinionFallback(review.id, this.usuarioId as number).subscribe({
+            next: () => {
+              this.placeReviews = this.placeReviews.filter(r => Number(r.id) !== Number(review.id));
+              this.mostrarReviewToast('Opinión eliminada correctamente.', 'success');
+            },
+            error: (fallbackErr) => {
+              console.error('Error eliminando opinión (fallback)', fallbackErr);
+              this.mostrarReviewToast('No se pudo eliminar. Reinicia el backend e inténtalo de nuevo.', 'error');
+            }
+          });
+          return;
+        }
+        console.error('Error eliminando opinión', err);
+        this.mostrarReviewToast('No se pudo eliminar la opinión. Inténtalo de nuevo.', 'error');
       }
     });
   }
