@@ -1,7 +1,7 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { UsuarioService } from '../../services/usuario.service';
 import { finalize } from 'rxjs/operators';
 
@@ -15,14 +15,16 @@ import { finalize } from 'rxjs/operators';
 export class OlvidepasswordComponent implements OnInit, OnDestroy {
 
   currentStep: number = 1;
-  selectedMethod: 'correo' | 'sms' = 'correo';
+  readonly selectedMethod: 'correo' = 'correo';
   contacto: string = '';
   contactoError: string = '';
   otpDigits: string[] = ['', '', '', '', '', ''];
+  readonly otpIndexes: number[] = [0, 1, 2, 3, 4, 5];
   otpError: string = '';
   codigoGenerado: string = '';
   resendSeconds: number = 60;
-  private resendInterval: any;
+  private resendInterval: ReturnType<typeof setInterval> | null = null;
+  resendLoading: boolean = false;
   nuevaPassword: string = '';
   confirmarPassword: string = '';
   passwordError: string = '';
@@ -33,17 +35,14 @@ export class OlvidepasswordComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private usuarioService: UsuarioService,
-    private cdr: ChangeDetectorRef   // ← AGREGADO para forzar detección de cambios
-  ) {}
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone
+  ) { }
 
-  ngOnInit(): void {}
+  ngOnInit(): void { }
 
   ngOnDestroy(): void {
     this.clearResendTimer();
-  }
-
-  selectMethod(method: 'correo' | 'sms'): void {
-    this.selectedMethod = method;
   }
 
   goToStep2(): void {
@@ -52,34 +51,16 @@ export class OlvidepasswordComponent implements OnInit, OnDestroy {
     this.contactoError = '';
   }
 
-  get contactoPlaceholder(): string {
-    return this.selectedMethod === 'correo'
-      ? 'Ingresa tu correo electrónico'
-      : 'Ingresa tu número de teléfono (10 dígitos)';
-  }
-
-  get contactoType(): string {
-    return this.selectedMethod === 'correo' ? 'email' : 'tel';
-  }
-
   validarContacto(): boolean {
     this.contactoError = '';
     if (!this.contacto.trim()) {
       this.contactoError = 'Este campo es obligatorio.';
       return false;
     }
-    if (this.selectedMethod === 'correo') {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(this.contacto)) {
-        this.contactoError = 'Ingresa un correo válido.';
-        return false;
-      }
-    } else {
-      const telRegex = /^[0-9]{10}$/;
-      if (!telRegex.test(this.contacto.replace(/\s/g, ''))) {
-        this.contactoError = 'Ingresa un número de 10 dígitos.';
-        return false;
-      }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(this.contacto.trim())) {
+      this.contactoError = 'Ingresa un correo válido.';
+      return false;
     }
     return true;
   }
@@ -97,23 +78,23 @@ export class OlvidepasswordComponent implements OnInit, OnDestroy {
       this.selectedMethod,
       this.codigoGenerado
     )
-    .pipe(
-      finalize(() => {
-        this.loading = false;
-        this.cdr.detectChanges(); // ← FUERZA actualización de la vista
-      })
-    )
-    .subscribe({
-      next: (res) => {
-        console.log('Respuesta servidor:', res);
-        this.avanzarAOTP();
-        this.cdr.detectChanges(); // ← fuerza el paso de step
-      },
-      error: (e) => {
-        this.contactoError = e.error?.error || 'No se pudo enviar el código. Verifica tus datos.';
-        console.error('Error en peticion:', e);
-      }
-    });
+      .pipe(
+        finalize(() => {
+          this.loading = false;
+          this.cdr.detectChanges(); // ← FUERZA actualización de la vista
+        })
+      )
+      .subscribe({
+        next: (res) => {
+          console.log('Respuesta servidor:', res);
+          this.avanzarAOTP();
+          this.cdr.detectChanges(); // ← fuerza el paso de step
+        },
+        error: (e) => {
+          this.contactoError = e.error?.error || 'No se pudo enviar el código. Verifica tus datos.';
+          console.error('Error en peticion:', e);
+        }
+      });
   }
 
   private avanzarAOTP(): void {
@@ -130,8 +111,21 @@ export class OlvidepasswordComponent implements OnInit, OnDestroy {
   startResendTimer(): void {
     this.clearResendTimer();
     this.resendSeconds = 60;
+    this.cdr.detectChanges();
+
     this.resendInterval = setInterval(() => {
-      this.resendSeconds > 0 ? this.resendSeconds-- : this.clearResendTimer();
+      this.ngZone.run(() => {
+        if (this.resendSeconds > 0) {
+          this.resendSeconds--;
+        }
+
+        if (this.resendSeconds <= 0) {
+          this.clearResendTimer();
+        }
+
+        // Forzar render del valor en cada tick para evitar que "se congele" visualmente.
+        this.cdr.detectChanges();
+      });
     }, 1000);
   }
 
@@ -143,59 +137,133 @@ export class OlvidepasswordComponent implements OnInit, OnDestroy {
   }
 
   reenviarCodigo(): void {
-    if (this.resendSeconds > 0) return;
-    this.codigoGenerado = Math.floor(100000 + Math.random() * 900000).toString();
-    console.log(`[DEV] Nuevo código OTP: ${this.codigoGenerado}`);
-    this.otpDigits = ['', '', '', '', '', ''];
+    if (this.resendSeconds > 0 || this.resendLoading) return;
+
+    this.resendLoading = true;
     this.otpError = '';
-    this.startResendTimer();
-    setTimeout(() => (document.querySelector('#otp-0') as HTMLInputElement)?.focus(), 50);
+    this.codigoGenerado = Math.floor(100000 + Math.random() * 900000).toString();
+
+    this.usuarioService.enviarCodigoRecuperacion(
+      this.contacto.trim().toLowerCase(),
+      this.selectedMethod,
+      this.codigoGenerado
+    )
+      .pipe(
+        finalize(() => {
+          this.resendLoading = false;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.otpDigits = ['', '', '', '', '', ''];
+          this.startResendTimer();
+          setTimeout(() => this.focusOtp(0), 50);
+        },
+        error: (e) => {
+          this.otpError = e.error?.error || 'No se pudo reenviar el código. Intenta nuevamente.';
+          console.error('Error al reenviar código:', e);
+        }
+      });
   }
 
   onOtpInput(index: number, event: Event): void {
-  const input = event.target as HTMLInputElement;
-  const raw = input.value.replace(/\D/g, '');
+    const input = event.target as HTMLInputElement;
+    const digits = input.value.replace(/\D/g, '');
 
-  // Si escribieron más de 1 dígito (pegado o doble input), tomar solo el último
-  const char = raw ? raw[raw.length - 1] : '';
-  
-  this.otpDigits[index] = char;
-  
-  // Forzar el valor visualmente
-  setTimeout(() => {
-    input.value = char;
-  }, 0);
+    if (!digits) {
+      this.otpDigits[index] = '';
+      input.value = '';
+      return;
+    }
 
-  // Mover al siguiente SOLO después de que el valor fue guardado
-  if (char && index < 5) {
-    setTimeout(() => {
-      (document.querySelector(`#otp-${index + 1}`) as HTMLInputElement)?.focus();
-    }, 10);
-  }
-}
+    let cursor = index;
+    for (const digit of digits) {
+      if (cursor > 5) break;
+      this.otpDigits[cursor] = digit;
+      cursor++;
+    }
 
-  onOtpKeydown(index: number, event: KeyboardEvent): void {
-    if (event.key === 'Backspace' && !this.otpDigits[index] && index > 0) {
-      (document.querySelector(`#otp-${index - 1}`) as HTMLInputElement)?.focus();
+    this.syncOtpInputs();
+    if (cursor <= 5) {
+      this.focusOtp(cursor);
     }
   }
 
-  onOtpPaste(event: ClipboardEvent): void {
+  onOtpKeydown(index: number, event: KeyboardEvent): void {
+    if (event.key === 'Backspace') {
+      event.preventDefault();
+
+      if (this.otpDigits[index]) {
+        this.otpDigits[index] = '';
+        this.syncOtpInputs();
+        return;
+      }
+
+      if (index > 0) {
+        this.otpDigits[index - 1] = '';
+        this.syncOtpInputs();
+        this.focusOtp(index - 1);
+      }
+      return;
+    }
+
+    if (event.key === 'ArrowLeft' && index > 0) {
+      event.preventDefault();
+      this.focusOtp(index - 1);
+      return;
+    }
+
+    if (event.key === 'ArrowRight' && index < 5) {
+      event.preventDefault();
+      this.focusOtp(index + 1);
+      return;
+    }
+
+    if (event.key.length === 1 && !/[0-9]/.test(event.key)) {
+      event.preventDefault();
+    }
+  }
+
+  onOtpPaste(index: number, event: ClipboardEvent): void {
     event.preventDefault();
     const paste = event.clipboardData?.getData('text').replace(/\D/g, '') ?? '';
-    for (let i = 0; i < 6 && i < paste.length; i++) {
-      this.otpDigits[i] = paste[i];
+    if (!paste) return;
+
+    let cursor = index;
+    for (const digit of paste) {
+      if (cursor > 5) break;
+      this.otpDigits[cursor] = digit;
+      cursor++;
+    }
+
+    this.syncOtpInputs();
+    if (cursor <= 5) {
+      this.focusOtp(cursor);
+    }
+  }
+
+  private focusOtp(index: number): void {
+    (document.querySelector(`#otp-${index}`) as HTMLInputElement)?.focus();
+  }
+
+  private syncOtpInputs(): void {
+    for (let i = 0; i < 6; i++) {
+      const otpInput = document.querySelector(`#otp-${i}`) as HTMLInputElement | null;
+      if (otpInput) {
+        otpInput.value = this.otpDigits[i] ?? '';
+      }
     }
   }
 
   verificarCodigo(): void {
     this.otpError = '';
     const codigoIngresado = this.otpDigits.join('');
-    
+
     console.log('Digits array:', this.otpDigits);
     console.log('Código ingresado:', codigoIngresado);
     console.log('Código generado:', this.codigoGenerado);
-    
+
     if (codigoIngresado.length < 6) {
       this.otpError = 'Ingresa los 6 dígitos del código.';
       return;
@@ -217,15 +285,15 @@ export class OlvidepasswordComponent implements OnInit, OnDestroy {
     const pwd = this.nuevaPassword;
     if (!pwd) return { level: 0, label: '', color: '' };
     let score = 0;
-    if (pwd.length >= 8)          score++;
-    if (/[A-Z]/.test(pwd))        score++;
-    if (/[0-9]/.test(pwd))        score++;
+    if (pwd.length >= 8) score++;
+    if (/[A-Z]/.test(pwd)) score++;
+    if (/[0-9]/.test(pwd)) score++;
     if (/[^A-Za-z0-9]/.test(pwd)) score++;
     const levels = [
       { level: 1, label: 'Muy débil', color: '#e63946' },
-      { level: 2, label: 'Débil',     color: '#f4a261' },
-      { level: 3, label: 'Media',     color: '#e9c46a' },
-      { level: 4, label: 'Fuerte',    color: '#4caf50' },
+      { level: 2, label: 'Débil', color: '#f4a261' },
+      { level: 3, label: 'Media', color: '#e9c46a' },
+      { level: 4, label: 'Fuerte', color: '#4caf50' },
     ];
     return levels[score - 1] ?? levels[0];
   }
@@ -271,10 +339,8 @@ export class OlvidepasswordComponent implements OnInit, OnDestroy {
 
   private sincronizarLocalStorage(): void {
     const correoGuardado = localStorage.getItem('correoUsuario');
-    const telGuardado    = localStorage.getItem('telefonoUsuario');
     const coincide =
-      (this.selectedMethod === 'correo' && correoGuardado === this.contacto) ||
-      (this.selectedMethod === 'sms'    && telGuardado    === this.contacto);
+      (correoGuardado ?? '').trim().toLowerCase() === this.contacto.trim().toLowerCase();
 
     if (coincide) {
       localStorage.setItem('passwordUsuario', this.nuevaPassword);
@@ -284,7 +350,7 @@ export class OlvidepasswordComponent implements OnInit, OnDestroy {
           const u = JSON.parse(raw);
           u.pass = this.nuevaPassword;
           localStorage.setItem('usuario', JSON.stringify(u));
-        } catch {}
+        } catch { }
       }
     }
   }

@@ -17,6 +17,10 @@ export class OpinionService {
     return this.http.get<any[]>(`${this.apiUrl}/${encodeURIComponent(lugarId)}`);
   }
 
+  getOpinionesPorUsuario(usuarioId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/usuario/${usuarioId}`);
+  }
+
   /**
    * Guarda una nueva opinión. El objeto debe contener {lugarId, calificacion, texto} y usuarioId como param.
    */

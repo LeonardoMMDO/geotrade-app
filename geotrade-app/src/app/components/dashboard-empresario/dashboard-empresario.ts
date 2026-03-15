@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, OnInit, OnDestroy } from '@angular/core';
+import { Component, AfterViewInit, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule, NgClass } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -24,12 +24,13 @@ import { catchError } from 'rxjs/operators';
 })
 export class DashboardEmpresarioComponent implements OnInit, AfterViewInit, OnDestroy {
   negocios: Negocio[] = [];
+  negocioSeleccionadoKey: string | null = null;
+  private negocioInicialPendiente: Negocio | null = null;
+  private mostrarRegistroPendiente: boolean = false;
   idUsuarioSamuel = 123;
   nombreDisplay: string = '';
   correoDisplay: string = '';
   telefonoDisplay: string = '';
-  passwordDisplay: string = '';
-  mostrarPassword: boolean = false;
   mostrarConfirmacion: boolean = false;
   // para crear negocio
   archivosFotos: File[] = [];
@@ -74,6 +75,8 @@ export class DashboardEmpresarioComponent implements OnInit, AfterViewInit, OnDe
   promedioCalificacionNegocio: number = 0;
   totalOpinionesNegocio: number = 0;
   cargandoMetricas: boolean = false;
+  private dashboardMediaQuery: MediaQueryList | null = null;
+  private dashboardMediaListener: ((event: MediaQueryListEvent) => void) | null = null;
 
   constructor(
     private negocioService: NegocioService,
@@ -83,7 +86,7 @@ export class DashboardEmpresarioComponent implements OnInit, AfterViewInit, OnDe
     private sucursalService: SucursalService,
     private ngZone: NgZone,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) { }
 
   ngOnInit() {
     const sessionData = localStorage.getItem('usuario');
@@ -97,7 +100,6 @@ export class DashboardEmpresarioComponent implements OnInit, AfterViewInit, OnDe
       this.correoDisplay = localStorage.getItem('correoUsuario') || '';
       this.telefonoDisplay = localStorage.getItem('telefonoUsuario') || '';
     }
-    this.passwordDisplay = localStorage.getItem('passwordUsuario') || '';
     this.cargarNegocios();
   }
 
@@ -105,7 +107,6 @@ export class DashboardEmpresarioComponent implements OnInit, AfterViewInit, OnDe
     this.nombreDisplay = localStorage.getItem('nombreUsuario') || '';
     this.correoDisplay = localStorage.getItem('correoUsuario') || '';
     this.telefonoDisplay = localStorage.getItem('telefonoUsuario') || '';
-    this.passwordDisplay = localStorage.getItem('passwordUsuario') || '';
   }
 
   initNegocio(): Negocio {
@@ -172,7 +173,7 @@ export class DashboardEmpresarioComponent implements OnInit, AfterViewInit, OnDe
           container.style.flexDirection = 'column';
           container.style.alignItems = 'center';
           container.style.margin = '8px';
-          
+
           if (f.type.startsWith('image/')) {
             const img = document.createElement('img');
             img.src = e.target.result;
@@ -194,7 +195,7 @@ export class DashboardEmpresarioComponent implements OnInit, AfterViewInit, OnDe
             icon.style.borderRadius = '4px';
             container.appendChild(icon);
           }
-          
+
           const label = document.createElement('p');
           label.textContent = f.name;
           label.style.fontSize = '0.75rem';
@@ -205,7 +206,7 @@ export class DashboardEmpresarioComponent implements OnInit, AfterViewInit, OnDe
           label.style.whiteSpace = 'nowrap';
           label.style.color = '#666';
           container.appendChild(label);
-          
+
           preview.appendChild(container);
         }
       };
@@ -219,9 +220,106 @@ export class DashboardEmpresarioComponent implements OnInit, AfterViewInit, OnDe
     const idABuscar = user?.id || user?.id_usuario || this.idUsuarioSamuel;
 
     this.negocioService.getNegociosByUsuario(idABuscar).subscribe({
-      next: (data) => { this.negocios = data; },
+      next: (data) => {
+        this.ngZone.run(() => {
+          this.negocios = data || [];
+          this.cdr.detectChanges();
+
+          if (this.negocios.length > 0) {
+            this.negocioInicialPendiente = this.negocios[0];
+            this.mostrarRegistroPendiente = false;
+          } else {
+            this.negocioInicialPendiente = null;
+            this.mostrarRegistroPendiente = true;
+          }
+
+          this.aplicarVistaInicialPendiente();
+        });
+      },
       error: (err) => console.error("Error cargando negocios", err)
     });
+  }
+
+  private aplicarVistaInicialPendiente() {
+    setTimeout(() => {
+      if (this.negocioInicialPendiente) {
+        const bizInicial = this.negocioInicialPendiente;
+        this.negocioInicialPendiente = null;
+        this.mostrarRegistroPendiente = false;
+        this.mostrarDetallesDinamicos(bizInicial);
+        this.cdr.detectChanges();
+        return;
+      }
+
+      if (this.mostrarRegistroPendiente) {
+        this.mostrarRegistroPendiente = false;
+        this.mostrarEstadoSinNegocios();
+        this.cdr.detectChanges();
+      }
+    }, 0);
+  }
+
+  private mostrarEstadoSinNegocios() {
+    this.negocioSeleccionadoKey = null;
+    const regForm = document.getElementById('registrationForm');
+    const detailsView = document.getElementById('detailsView');
+    const editSectionBiz = document.getElementById('editProfileSectionBiz');
+    const noBusinessState = document.getElementById('noBusinessState');
+
+    if (regForm) regForm.style.display = 'none';
+    if (detailsView) detailsView.style.display = 'none';
+    if (editSectionBiz) editSectionBiz.style.display = 'none';
+    if (noBusinessState) noBusinessState.style.display = 'flex';
+  }
+
+  private restaurarVistaPrincipalTrasEdicion() {
+    const regForm = document.getElementById('registrationForm');
+    const detailsView = document.getElementById('detailsView');
+    const noBusinessState = document.getElementById('noBusinessState');
+
+    if (regForm) regForm.style.display = 'none';
+
+    if (this.negocios.length === 0) {
+      if (detailsView) detailsView.style.display = 'none';
+      if (noBusinessState) noBusinessState.style.display = 'flex';
+      return;
+    }
+
+    if (!this.negocioSeleccionadoKey && this.negocios[0]) {
+      this.mostrarDetallesDinamicos(this.negocios[0]);
+      return;
+    }
+
+    if (noBusinessState) noBusinessState.style.display = 'none';
+    if (detailsView) {
+      detailsView.style.display = 'block';
+    }
+  }
+
+  getNegocioStableKey(biz: Negocio): string {
+    const rawId = this.getNegocioId(biz);
+    if (rawId != null) {
+      return `id:${rawId}`;
+    }
+    return `tmp:${(biz.nombre_empresa || '').toLowerCase()}|${(biz.correo_empresa || '').toLowerCase()}|${(biz.telefono_empresa || '').toLowerCase()}`;
+  }
+
+  getNegocioId(biz: Negocio): number | null {
+    const rawId = (biz.id || (biz as any).id_negocio) as number | null | undefined;
+    return rawId ?? null;
+  }
+
+  mostrarFormularioRegistro() {
+    this.negocioSeleccionadoKey = null;
+    const regForm = document.getElementById('registrationForm');
+    const detailsView = document.getElementById('detailsView');
+    const editSectionBiz = document.getElementById('editProfileSectionBiz');
+    const noBusinessState = document.getElementById('noBusinessState');
+
+    if (detailsView) detailsView.style.display = 'none';
+    if (editSectionBiz) editSectionBiz.style.display = 'none';
+    if (noBusinessState) noBusinessState.style.display = 'none';
+    if (regForm) regForm.style.display = 'block';
   }
 
   confirmarRegistro() {
@@ -299,17 +397,6 @@ export class DashboardEmpresarioComponent implements OnInit, AfterViewInit, OnDe
   }
 
   ngAfterViewInit() {
-    // --- BOTÓN NUEVO NEGOCIO ---
-    const btnNew = document.getElementById('btnAddNewBiz');
-    btnNew?.addEventListener('click', () => {
-      const regForm = document.getElementById('registrationForm');
-      const detailsView = document.getElementById('detailsView');
-      const editSectionBiz = document.getElementById('editProfileSectionBiz');
-      if (detailsView) detailsView.style.display = 'none';
-      if (editSectionBiz) editSectionBiz.style.display = 'none';
-      if (regForm) regForm.style.display = 'block';
-    });
-
     // --- DROPDOWN PERFIL ---
     const profileBtnBiz = document.getElementById('profileBtnBiz');
     const dropdownBiz = document.getElementById('profileDropdownBiz');
@@ -350,8 +437,7 @@ export class DashboardEmpresarioComponent implements OnInit, AfterViewInit, OnDe
     if (btnCancelEditBiz) {
       btnCancelEditBiz.addEventListener('click', () => {
         if (editSectionBiz) editSectionBiz.style.display = 'none';
-        const regForm = document.getElementById('registrationForm');
-        if (regForm) regForm.style.display = 'block';
+        this.restaurarVistaPrincipalTrasEdicion();
       });
     }
 
@@ -363,8 +449,7 @@ export class DashboardEmpresarioComponent implements OnInit, AfterViewInit, OnDe
         const datosActualizados = {
           nombre: this.nombreDisplay,
           correo: this.correoDisplay,
-          telefono: this.telefonoDisplay,
-          pass: this.passwordDisplay
+          telefono: this.telefonoDisplay
         };
 
         this.usuarioService.actualizarUsuario(id, datosActualizados).subscribe({
@@ -373,10 +458,8 @@ export class DashboardEmpresarioComponent implements OnInit, AfterViewInit, OnDe
             localStorage.setItem('nombreUsuario', usuarioActualizado.nombre);
             localStorage.setItem('correoUsuario', usuarioActualizado.correo);
             localStorage.setItem('telefonoUsuario', usuarioActualizado.telefono || '');
-            localStorage.setItem('passwordUsuario', usuarioActualizado.pass || '');
             if (editSectionBiz) editSectionBiz.style.display = 'none';
-            const regForm = document.getElementById('registrationForm');
-            if (regForm) regForm.style.display = 'block';
+            this.restaurarVistaPrincipalTrasEdicion();
             alert('¡Perfil actualizado correctamente!');
           },
           error: (err) => {
@@ -386,13 +469,33 @@ export class DashboardEmpresarioComponent implements OnInit, AfterViewInit, OnDe
         });
       });
     }
+
+    if (typeof window !== 'undefined' && 'matchMedia' in window) {
+      this.dashboardMediaQuery = window.matchMedia('(max-width: 780px)');
+      this.dashboardMediaListener = () => {
+        // Delay one tick to let browser viewport recalculation settle.
+        setTimeout(() => this.refrescarLayoutResponsiveActivo(), 0);
+      };
+
+      const mediaQueryAny = this.dashboardMediaQuery as any;
+      if (typeof mediaQueryAny.addEventListener === 'function') {
+        this.dashboardMediaQuery.addEventListener('change', this.dashboardMediaListener);
+      } else if (typeof mediaQueryAny.addListener === 'function') {
+        mediaQueryAny.addListener(this.dashboardMediaListener);
+      }
+    }
+
+    this.aplicarVistaInicialPendiente();
+    this.refrescarLayoutResponsiveActivo();
   }
 
   private ocultarVistas() {
     const regForm = document.getElementById('registrationForm');
     const detailsView = document.getElementById('detailsView');
+    const noBusinessState = document.getElementById('noBusinessState');
     if (regForm) regForm.style.display = 'none';
     if (detailsView) detailsView.style.display = 'none';
+    if (noBusinessState) noBusinessState.style.display = 'none';
   }
 
   private normalizeCategoria(value: string | null | undefined): string {
@@ -429,11 +532,14 @@ export class DashboardEmpresarioComponent implements OnInit, AfterViewInit, OnDe
     const regForm = document.getElementById('registrationForm');
     const detailsView = document.getElementById('detailsView');
     const editSectionBiz = document.getElementById('editProfileSectionBiz');
+    const noBusinessState = document.getElementById('noBusinessState');
 
     if (regForm) regForm.style.display = 'none';
     if (editSectionBiz) editSectionBiz.style.display = 'none';
+    if (noBusinessState) noBusinessState.style.display = 'none';
 
-    const idNegocio = (biz.id || (biz as any).id_negocio) as number;
+    const idNegocio = this.getNegocioId(biz) as number;
+    this.negocioSeleccionadoKey = this.getNegocioStableKey(biz);
     if (idNegocio && !this.sucursalesPorNegocio[idNegocio]) {
       this.sucursalService.getSucursalesByNegocio(idNegocio).subscribe({
         next: (rows) => {
@@ -464,13 +570,13 @@ export class DashboardEmpresarioComponent implements OnInit, AfterViewInit, OnDe
       const selectorSucursalesHtml = this.renderSelectorSucursalesHtml(idNegocioActual);
 
       detailsView.innerHTML = `
-        <div style="background:linear-gradient(135deg, #2c3e50, #3498db); border-radius:15px 15px 0 0; padding:30px; color:white; display:flex; align-items:center; gap:20px;">
+        <div data-biz-detail-header="true" style="background:linear-gradient(135deg, #2c3e50, #3498db); border-radius:15px 15px 0 0; padding:30px; color:white; display:flex; align-items:center; gap:20px;">
             ${imgUrl
-              ? `<img src="${imgUrl}" style="width:90px; height:90px; object-fit:cover; border-radius:50%; border:3px solid rgba(255,255,255,0.4); box-shadow:0 4px 15px rgba(0,0,0,0.2);">`
-              : `<div style="width:90px; height:90px; border-radius:50%; background:rgba(255,255,255,0.15); display:flex; align-items:center; justify-content:center; border:3px solid rgba(255,255,255,0.3);">
+          ? `<img src="${imgUrl}" style="width:90px; height:90px; object-fit:cover; border-radius:50%; border:3px solid rgba(255,255,255,0.4); box-shadow:0 4px 15px rgba(0,0,0,0.2);">`
+          : `<div style="width:90px; height:90px; border-radius:50%; background:rgba(255,255,255,0.15); display:flex; align-items:center; justify-content:center; border:3px solid rgba(255,255,255,0.3);">
                      <i class="${icono}" style="font-size:2.2rem; color:white;"></i>
                  </div>`
-            }
+        }
             <div>
                 <h2 style="margin:0; font-size:1.8rem; font-weight:800;">${biz.nombre_empresa}</h2>
                 <span style="background:rgba(255,255,255,0.2); padding:4px 14px; border-radius:20px; font-size:0.85rem; margin-top:8px; display:inline-block; text-transform:capitalize;">
@@ -479,7 +585,7 @@ export class DashboardEmpresarioComponent implements OnInit, AfterViewInit, OnDe
             </div>
         </div>
 
-        <div style="padding:25px; display:grid; grid-template-columns:1fr 1fr; gap:15px;">
+        <div data-biz-detail-grid="true" style="padding:25px; display:grid; grid-template-columns:1fr 1fr; gap:15px;">
             <div style="background:#f8fafc; border-radius:12px; padding:15px; display:flex; align-items:center; gap:12px;">
                 <div style="width:40px; height:40px; background:#e8f4fd; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
                     <i class="bi bi-geo-alt-fill" style="color:#3498db; font-size:1.1rem;"></i>
@@ -520,7 +626,7 @@ export class DashboardEmpresarioComponent implements OnInit, AfterViewInit, OnDe
                 </div>
             </div>
 
-            <div style="grid-column:span 2; background:#f8fafc; border-radius:12px; padding:15px; display:flex; align-items:flex-start; gap:12px;">
+            <div data-biz-detail-description="true" style="grid-column:span 2; background:#f8fafc; border-radius:12px; padding:15px; display:flex; align-items:flex-start; gap:12px;">
                 <div style="width:40px; height:40px; background:#f0eaff; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
                     <i class="bi bi-chat-text-fill" style="color:#8e44ad; font-size:1.1rem;"></i>
                 </div>
@@ -533,7 +639,7 @@ export class DashboardEmpresarioComponent implements OnInit, AfterViewInit, OnDe
 
         ${selectorSucursalesHtml}
 
-        <div style="padding:0 25px 25px; display:flex; gap:12px;">
+        <div data-biz-detail-actions="true" style="padding:0 25px 25px; display:flex; gap:12px;">
             <button id="btnEditBiz" style="flex:1; padding:13px; background:linear-gradient(135deg, #3498db, #2980b9); color:white; border:none; border-radius:10px; font-weight:700; cursor:pointer; font-size:0.95rem; display:flex; align-items:center; justify-content:center; gap:8px; transition:0.3s;">
                 <i class="bi bi-pencil-square"></i> Editar negocio
             </button>
@@ -548,6 +654,8 @@ export class DashboardEmpresarioComponent implements OnInit, AfterViewInit, OnDe
             </button>
         </div>
       `;
+
+      this.aplicarAjustesMovilesDetalle(detailsView);
 
       // --- ELIMINAR ---
       const btnDelete = document.getElementById('btnDeleteBiz');
@@ -604,11 +712,11 @@ export class DashboardEmpresarioComponent implements OnInit, AfterViewInit, OnDe
           this.negocioEnEdicionTemp = null;
 
           detailsView.innerHTML = `
-            <div style="background:linear-gradient(135deg, #2c3e50, #3498db); border-radius:15px 15px 0 0; padding:25px 30px; color:white;">
+            <div data-biz-edit-header="true" style="background:linear-gradient(135deg, #2c3e50, #3498db); border-radius:15px 15px 0 0; padding:25px 30px; color:white;">
                 <h2 style="margin:0; font-size:1.5rem;"><i class="bi bi-pencil-square"></i> Editar: ${biz.nombre_empresa}</h2>
             </div>
-            <div style="padding:25px; display:grid; grid-template-columns:1fr 1fr; gap:20px;">
-                <div style="grid-column:span 2;">
+            <div data-biz-edit-grid="true" style="padding:25px; display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+              <div data-biz-edit-span="full" style="grid-column:span 2;">
                     <label style="font-weight:700; color:#2c3e50; display:block; margin-bottom:8px; font-size:0.85rem; text-transform:uppercase;">Nombre de la Empresa</label>
                     <input type="text" id="edit_nombre" value="${biz.nombre_empresa || ''}" style="width:100%; padding:12px 15px; border:2px solid #eee; border-radius:10px; outline:none; font-size:1rem; transition:0.3s;" onfocus="this.style.borderColor='#3498db'" onblur="this.style.borderColor='#eee'">
                 </div>
@@ -629,7 +737,7 @@ export class DashboardEmpresarioComponent implements OnInit, AfterViewInit, OnDe
                 </div>
                 <div>
                     <label style="font-weight:700; color:#2c3e50; display:block; margin-bottom:8px; font-size:0.85rem; text-transform:uppercase;">Dirección</label>
-                    <div style="display:flex; gap:8px;">
+                    <div data-biz-edit-address-group="true" style="display:flex; gap:8px;">
                       <input type="text" id="edit_direccion" value="${biz.direccion_empresa || ''}" style="flex:1; padding:12px 15px; border:2px solid #eee; border-radius:10px; outline:none; font-size:1rem;" onfocus="this.style.borderColor='#3498db'" onblur="this.style.borderColor='#eee'">
                       <button type="button" id="btnMapaEditar" style="padding:12px 20px; background:linear-gradient(135deg, #3498db, #2980b9); color:white; border:none; border-radius:10px; font-weight:700; cursor:pointer; white-space:nowrap; font-size:0.9rem; display:flex; align-items:center; gap:6px;">
                         <i class="bi bi-geo-alt-fill"></i> Mapa
@@ -644,11 +752,11 @@ export class DashboardEmpresarioComponent implements OnInit, AfterViewInit, OnDe
                     <label style="font-weight:700; color:#2c3e50; display:block; margin-bottom:8px; font-size:0.85rem; text-transform:uppercase;">Horario</label>
                     <input type="text" id="edit_horario" value="${biz.horario_empresa || ''}" style="width:100%; padding:12px 15px; border:2px solid #eee; border-radius:10px; outline:none; font-size:1rem;" onfocus="this.style.borderColor='#3498db'" onblur="this.style.borderColor='#eee'">
                 </div>
-                <div style="grid-column:span 2;">
+                <div data-biz-edit-span="full" style="grid-column:span 2;">
                     <label style="font-weight:700; color:#2c3e50; display:block; margin-bottom:8px; font-size:0.85rem; text-transform:uppercase;">Correo Electrónico</label>
                     <input type="email" id="edit_correo" value="${biz.correo_empresa || ''}" style="width:100%; padding:12px 15px; border:2px solid #eee; border-radius:10px; outline:none; font-size:1rem;" onfocus="this.style.borderColor='#3498db'" onblur="this.style.borderColor='#eee'">
                 </div>
-                <div style="grid-column:span 2;">
+                <div data-biz-edit-span="full" style="grid-column:span 2;">
                     <label style="font-weight:700; color:#2c3e50; display:block; margin-bottom:8px; font-size:0.85rem; text-transform:uppercase;">Descripción</label>
                     <textarea id="edit_descripcion" rows="3" style="width:100%; padding:12px 15px; border:2px solid #eee; border-radius:10px; outline:none; font-size:1rem; resize:vertical;" onfocus="this.style.borderColor='#3498db'" onblur="this.style.borderColor='#eee'">${biz.descripcion_empresa || ''}</textarea>
                 </div>
@@ -661,7 +769,7 @@ export class DashboardEmpresarioComponent implements OnInit, AfterViewInit, OnDe
                     <input type="file" id="edit_ine" accept="image/*,.pdf" style="width:100%;">
                 </div>
             </div>
-            <div style="padding:0 25px 25px; display:flex; gap:12px;">
+            <div data-biz-edit-actions="true" style="padding:0 25px 25px; display:flex; gap:12px;">
                 <button id="btnGuardarEdicion" style="flex:1; padding:13px; background:linear-gradient(135deg, #27ae60, #219a52); color:white; border:none; border-radius:10px; font-weight:700; cursor:pointer; font-size:0.95rem;">
                     <i class="bi bi-check-lg"></i> Guardar Cambios
                 </button>
@@ -670,6 +778,8 @@ export class DashboardEmpresarioComponent implements OnInit, AfterViewInit, OnDe
                 </button>
             </div>
           `;
+
+          this.aplicarAjustesMovilesEdicion(detailsView);
 
           const inputFoto = document.getElementById('edit_foto') as HTMLInputElement;
           if (inputFoto) inputFoto.onchange = (e: any) => { this.archivoFotoEdit = e.target.files[0]; };
@@ -992,14 +1102,14 @@ export class DashboardEmpresarioComponent implements OnInit, AfterViewInit, OnDe
       this.tempNegocio.latitud = lat;
       this.tempNegocio.longitud = lng;
     }
-    
+
     // Obtener dirección usando Geocoder
     const geocoder = new google.maps.Geocoder();
     geocoder.geocode({ location: { lat, lng } }, (results, status) => {
       if (status === 'OK' && results && results[0]) {
         this.ngZone.run(() => {
           const direccion = results[0].formatted_address;
-          
+
           if (this.modoEdicionUbicacion) {
             // Actualizar campo en la edición
             const editDireccion = document.getElementById('edit_direccion') as HTMLInputElement;
@@ -1084,11 +1194,139 @@ export class DashboardEmpresarioComponent implements OnInit, AfterViewInit, OnDe
     }).join('');
 
     return `
-      <div style="padding:0 25px 16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+      <div data-biz-sucursal-container="true" style="padding:0 25px 16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
         <button type="button" data-sucursal-switch="principal" style="padding:8px 12px;border-radius:999px;cursor:pointer;font-weight:700;${principalClass}">Principal</button>
         ${sucursalesButtons}
       </div>
     `;
+  }
+
+  private esVistaMovil(): boolean {
+    return window.matchMedia('(max-width: 780px)').matches;
+  }
+
+  private refrescarLayoutResponsiveActivo(): void {
+    const detailsView = document.getElementById('detailsView') as HTMLElement | null;
+    if (!detailsView || window.getComputedStyle(detailsView).display === 'none') {
+      return;
+    }
+
+    if (detailsView.querySelector('#btnGuardarEdicion')) {
+      this.aplicarAjustesMovilesEdicion(detailsView);
+      return;
+    }
+
+    if (detailsView.querySelector('#btnEditBiz')) {
+      this.aplicarAjustesMovilesDetalle(detailsView);
+    }
+  }
+
+  @HostListener('window:resize')
+  onWindowResizeDashboard(): void {
+    this.refrescarLayoutResponsiveActivo();
+  }
+
+  private aplicarAjustesMovilesDetalle(detailsView: HTMLElement): void {
+    const isMobile = this.esVistaMovil();
+
+    detailsView.style.padding = isMobile ? '0' : '40px';
+    detailsView.style.overflowX = isMobile ? 'hidden' : 'visible';
+
+    const header = detailsView.querySelector('[data-biz-detail-header]') as HTMLElement | null;
+    if (header) {
+      header.style.padding = isMobile ? '16px' : '30px';
+      header.style.gap = isMobile ? '12px' : '20px';
+    }
+
+    const headerTitle = header?.querySelector('h2') as HTMLElement | null;
+    if (headerTitle) {
+      headerTitle.style.fontSize = isMobile ? '1.55rem' : '1.8rem';
+      headerTitle.style.lineHeight = isMobile ? '1.2' : '1.2';
+    }
+
+    const infoGrid = detailsView.querySelector('[data-biz-detail-grid]') as HTMLElement | null;
+    if (infoGrid) {
+      infoGrid.style.gridTemplateColumns = isMobile ? '1fr' : '1fr 1fr';
+      infoGrid.style.padding = isMobile ? '14px' : '25px';
+      infoGrid.style.gap = isMobile ? '10px' : '15px';
+
+      const descripcion = infoGrid.querySelector('[data-biz-detail-description]') as HTMLElement | null;
+      if (descripcion) {
+        descripcion.style.gridColumn = isMobile ? 'span 1' : 'span 2';
+      }
+
+      infoGrid.querySelectorAll('p').forEach((p) => {
+        const el = p as HTMLElement;
+        el.style.overflowWrap = isMobile ? 'anywhere' : 'normal';
+        el.style.wordBreak = isMobile ? 'break-word' : 'normal';
+      });
+    }
+
+    const sucursalContainer = detailsView.querySelector('[data-biz-sucursal-container]') as HTMLElement | null;
+    if (sucursalContainer) {
+      sucursalContainer.style.padding = isMobile ? '0 14px 12px' : '0 25px 16px';
+    }
+
+    const actionsContainer = detailsView.querySelector('[data-biz-detail-actions]') as HTMLElement | null;
+    if (actionsContainer) {
+      actionsContainer.style.display = isMobile ? 'grid' : 'flex';
+      actionsContainer.style.gridTemplateColumns = isMobile ? '1fr 1fr' : 'none';
+      actionsContainer.style.gap = isMobile ? '8px' : '12px';
+      actionsContainer.style.padding = isMobile ? '0 14px 14px' : '0 25px 25px';
+
+      actionsContainer.querySelectorAll('button').forEach((btn) => {
+        const el = btn as HTMLElement;
+        el.style.padding = isMobile ? '11px 8px' : '13px';
+        el.style.fontSize = isMobile ? '0.84rem' : '0.95rem';
+        el.style.minHeight = isMobile ? '46px' : '0';
+        el.style.whiteSpace = isMobile ? 'normal' : 'nowrap';
+        el.style.lineHeight = isMobile ? '1.15' : 'normal';
+        el.style.textAlign = 'center';
+      });
+    }
+  }
+
+  private aplicarAjustesMovilesEdicion(detailsView: HTMLElement): void {
+    const isMobile = this.esVistaMovil();
+
+    detailsView.style.padding = isMobile ? '0' : '40px';
+    detailsView.style.overflowX = isMobile ? 'hidden' : 'visible';
+
+    const header = detailsView.querySelector('[data-biz-edit-header]') as HTMLElement | null;
+    if (header) {
+      header.style.padding = isMobile ? '16px' : '25px 30px';
+    }
+
+    const editGrid = detailsView.querySelector('[data-biz-edit-grid]') as HTMLElement | null;
+    if (editGrid) {
+      editGrid.style.gridTemplateColumns = isMobile ? '1fr' : '1fr 1fr';
+      editGrid.style.padding = isMobile ? '14px' : '25px';
+      editGrid.style.gap = isMobile ? '12px' : '20px';
+
+      editGrid.querySelectorAll('[data-biz-edit-span="full"]').forEach((item) => {
+        (item as HTMLElement).style.gridColumn = isMobile ? 'span 1' : 'span 2';
+      });
+
+      editGrid.querySelectorAll('[data-biz-edit-address-group]').forEach((group) => {
+        const el = group as HTMLElement;
+        el.style.flexDirection = isMobile ? 'column' : 'row';
+        el.style.gap = isMobile ? '10px' : '8px';
+
+        const btnMapa = el.querySelector('#btnMapaEditar') as HTMLElement | null;
+        if (btnMapa) {
+          btnMapa.style.width = isMobile ? '100%' : 'auto';
+          btnMapa.style.justifyContent = 'center';
+        }
+      });
+    }
+
+    const editActions = detailsView.querySelector('[data-biz-edit-actions]') as HTMLElement | null;
+    if (editActions) {
+      editActions.style.padding = isMobile ? '0 14px 14px' : '0 25px 25px';
+      editActions.style.display = isMobile ? 'grid' : 'flex';
+      editActions.style.gridTemplateColumns = isMobile ? '1fr' : 'none';
+      editActions.style.gap = isMobile ? '8px' : '12px';
+    }
   }
 
   abrirOpinionesContexto(biz: Negocio, idNegocio: number) {
@@ -1212,6 +1450,15 @@ export class DashboardEmpresarioComponent implements OnInit, AfterViewInit, OnDe
   ngOnDestroy() {
     if (this.bizClickListener) {
       window.removeEventListener('click', this.bizClickListener);
+    }
+
+    if (this.dashboardMediaQuery && this.dashboardMediaListener) {
+      const mediaQueryAny = this.dashboardMediaQuery as any;
+      if (typeof mediaQueryAny.removeEventListener === 'function') {
+        this.dashboardMediaQuery.removeEventListener('change', this.dashboardMediaListener);
+      } else if (typeof mediaQueryAny.removeListener === 'function') {
+        mediaQueryAny.removeListener(this.dashboardMediaListener);
+      }
     }
   }
 }

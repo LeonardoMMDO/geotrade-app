@@ -1,6 +1,464 @@
-<div class="admin-container">
-  <h1>Bienvenido Programador Estrella, Full Stack, dueño y creador de esta aplicación </h1>
-  <p>Panel de Control Maestro - GeoTrade</p>
-  
-  <button (click)="cerrarSesion()">Cerrar Sesión</button>
+<div class="admin-shell container-fluid px-0">
+  <div class="row g-0 min-vh-100">
+    <aside class="sidebar-admin col-12 col-lg-3 col-xl-2">
+      <div class="brand-box">
+        <div class="brand-title-admin">
+          <img src="assets/recursos/mundo_geotrade.png" alt="Logo GeoTrade" class="logo-world-img-admin">
+          <h2>GeoTrade</h2>
+        </div>
+        <small>Panel Administrador</small>
+      </div>
+
+      <div class="sidebar-nav">
+        <button class="nav-admin" [class.active]="seccionActiva === 'general'" (click)="cambiarSeccion('general')">
+          <i class="bi bi-speedometer2"></i>
+          <span>General</span>
+        </button>
+
+        <button class="nav-admin" [class.active]="seccionActiva === 'categorias'"
+          (click)="cambiarSeccion('categorias')">
+          <i class="bi bi-grid-fill"></i>
+          <span>Categorias</span>
+        </button>
+
+        <button class="nav-admin" [class.active]="seccionActiva === 'usuarios'" (click)="cambiarSeccion('usuarios')">
+          <i class="bi bi-people-fill"></i>
+          <span>Gestion de Usuarios</span>
+        </button>
+      </div>
+    </aside>
+
+    <section class="content-admin col-12 col-lg-9 col-xl-10">
+      <header class="topbar-admin">
+        <h1>{{ tituloSeccion }}</h1>
+        <div class="topbar-actions">
+          <span class="welcome-admin">Hola, <strong>{{ nombreAdmin }}</strong></span>
+          <button class="btn btn-outline-secondary" (click)="cerrarSesion()">Cerrar Sesion</button>
+        </div>
+      </header>
+
+      <main class="main-admin" *ngIf="!cargandoDatos; else loadingPanel">
+        <section *ngIf="seccionActiva === 'general'" class="section-block">
+          <div class="card border-0 shadow-sm mb-4 welcome-card">
+            <div class="card-body">
+              <h3>Bienvenido al panel general</h3>
+              <p>
+                Aqui puedes visualizar el estado global de la plataforma, revisar cuentas activas y monitorear
+                comentarios de la comunidad.
+              </p>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-4">
+            <div class="col-12 col-md-6 col-xl-3">
+              <div class="card border-0 shadow-sm metric-card h-100">
+                <div class="card-body">
+                  <p>Usuarios registrados</p>
+                  <h4>{{ estadisticas.usuarios }}</h4>
+                  <small>{{ estadisticas.exploradores }} exploradores / {{ estadisticas.empresarios }}
+                    empresarios</small>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-xl-3">
+              <div class="card border-0 shadow-sm metric-card h-100">
+                <div class="card-body">
+                  <p>Negocios publicados</p>
+                  <h4>{{ estadisticas.negocios }}</h4>
+                  <small>{{ estadisticas.sucursales }} sucursales en total</small>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-xl-3">
+              <div class="card border-0 shadow-sm metric-card h-100">
+                <div class="card-body">
+                  <p>Comentarios registrados</p>
+                  <h4>{{ estadisticas.opiniones }}</h4>
+                  <small>Moderables desde Gestion de Usuarios</small>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-xl-3">
+              <div class="card border-0 shadow-sm metric-card h-100">
+                <div class="card-body">
+                  <p>Categorias activas</p>
+                  <h4>{{ estadisticas.categoriasActivas }}</h4>
+                  <small>{{ categorias.length }} categorias configuradas</small>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-12 col-xl-7">
+              <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 pb-0">
+                  <h5 class="mb-0">Datos generales recomendados</h5>
+                </div>
+                <div class="card-body">
+                  <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                      Cuentas activas
+                      <span class="badge text-bg-success rounded-pill">
+                        {{ cuentasActivas }}
+                      </span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                      Cuentas empresariales
+                      <span class="badge text-bg-primary rounded-pill">{{ estadisticas.empresarios }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                      Cuentas explorador
+                      <span class="badge text-bg-info rounded-pill">{{ estadisticas.exploradores }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                      Comentarios pendientes de revision
+                      <span class="badge text-bg-warning rounded-pill">{{ totalPendientes }}</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12 col-xl-5">
+              <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 pb-0">
+                  <h5 class="mb-0">Pendientes recientes</h5>
+                </div>
+                <div class="card-body">
+                  <div *ngFor="let item of pendientes.slice(0, 4)" class="pending-row">
+                    <div>
+                      <strong>{{ item.titulo }}</strong>
+                      <p>{{ item.detalle }}</p>
+                    </div>
+                    <span class="badge" [class.bg-danger]="item.tipo === 'Reporte'"
+                      [class.bg-secondary]="item.tipo === 'Mensaje'">
+                      {{ item.tipo }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section *ngIf="seccionActiva === 'categorias'" class="section-block position-relative">
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+            <div>
+              <h3 class="mb-0">Categorias</h3>
+              <small class="text-muted">Administra las categorias visibles para el registro de negocios.</small>
+            </div>
+            <button class="btn btn-primary" (click)="abrirModalNuevaCategoria()">
+              <i class="bi bi-plus-lg"></i>
+              Anadir Categoria
+            </button>
+          </div>
+
+          <div class="card border-0 shadow-sm mb-3">
+            <div class="card-body pb-0 d-md-none">
+              <p class="text-muted small mb-2">Desliza horizontalmente para ver todas las columnas.</p>
+            </div>
+            <div class="table-responsive categorias-table-wrap">
+              <table class="table align-middle mb-0 categorias-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let categoria of categorias">
+                    <td>#{{ categoria.id }}</td>
+                    <td>
+                      <div class="d-flex align-items-center gap-2">
+                        <i class="bi" [ngClass]="categoria.icono"></i>
+                        <strong>{{ categoria.nombre }}</strong>
+                      </div>
+                    </td>
+                    <td>
+                      <span [class]="claseEstadoCategoria(categoria)">{{ estadoCategoria(categoria) }}</span>
+                    </td>
+                    <td>
+                      <div class="d-flex gap-2 flex-wrap categorias-table-actions">
+                        <button class="btn btn-outline-primary btn-sm" (click)="abrirModalEditarCategoria(categoria)">
+                          Editar
+                        </button>
+                        <button class="btn btn-outline-warning btn-sm" *ngIf="categoria.habilitada"
+                          (click)="alternarEstadoCategoria(categoria)">
+                          Deshabilitar
+                        </button>
+                        <button class="btn btn-outline-success btn-sm" *ngIf="!categoria.habilitada"
+                          (click)="alternarEstadoCategoria(categoria)">
+                          Reactivar
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm" (click)="eliminarCategoria(categoria)">
+                          <i class="bi bi-trash3-fill"></i>
+                          Eliminar
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <button class="floating-pending-btn" (click)="abrirPanelPendientes()" aria-label="Abrir pendientes">
+            <i class="bi bi-chat-left-text-fill"></i>
+            <span>{{ totalPendientes }}</span>
+          </button>
+
+          <div class="pending-panel shadow" *ngIf="mostrarPanelPendientes">
+            <div class="pending-panel-header">
+              <h6>Pendientes y reportes</h6>
+              <button class="btn-close" (click)="cerrarPanelPendientes()"></button>
+            </div>
+            <div class="pending-panel-body">
+              <div *ngFor="let item of pendientes" class="pending-panel-item">
+                <strong>{{ item.titulo }}</strong>
+                <p>{{ item.detalle }}</p>
+                <small>{{ item.fecha }}</small>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section *ngIf="seccionActiva === 'usuarios'" class="section-block">
+          <div *ngIf="rolGestionActivo === 'ninguno'"
+            class="row g-4 justify-content-center align-items-center selector-roles">
+            <div class="col-12 col-sm-6">
+              <button class="card border-0 shadow-sm role-card w-100" (click)="seleccionarRolGestion('explorador')">
+                <div class="card-body text-center py-5">
+                  <i class="bi bi-person-walking"></i>
+                  <h4>Exploradores</h4>
+                  <p class="text-muted mb-0">{{ usuariosExploradores.length }} usuarios</p>
+                </div>
+              </button>
+            </div>
+
+            <div class="col-12 col-sm-6">
+              <button class="card border-0 shadow-sm role-card w-100" (click)="seleccionarRolGestion('empresario')">
+                <div class="card-body text-center py-5">
+                  <i class="bi bi-shop"></i>
+                  <h4>Empresarios</h4>
+                  <p class="text-muted mb-0">{{ usuariosEmpresarios.length }} usuarios</p>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <div *ngIf="rolGestionActivo !== 'ninguno'" class="card border-0 shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <h5 class="mb-0">
+                {{ rolGestionActivo === 'explorador' ? 'Lista de Exploradores' : 'Lista de Empresarios' }}
+              </h5>
+              <button class="btn btn-sm btn-outline-secondary" (click)="volverSelectorRoles()">Volver</button>
+            </div>
+
+            <div class="card-body">
+              <div class="user-row row g-2"
+                *ngFor="let usuario of (rolGestionActivo === 'explorador' ? usuariosExploradores : usuariosEmpresarios)">
+                <div class="col-12 col-xl-7">
+                  <strong class="d-block">{{ usuario.nombre }}</strong>
+                  <p class="mb-0 text-break">{{ usuario.correo }} | {{ usuario.telefono }}</p>
+                </div>
+
+                <div
+                  class="col-12 col-xl-5 d-flex align-items-start align-items-xl-center justify-content-xl-end gap-2 flex-wrap">
+                  <span class="badge" [class.text-bg-success]="cuentaActiva(usuario)"
+                    [class.text-bg-secondary]="!cuentaActiva(usuario)">
+                    {{ cuentaActiva(usuario) ? 'Activa' : 'Inactiva' }}
+                  </span>
+
+                  <button class="btn btn-outline-primary btn-sm" (click)="verOpinionesUsuario(usuario)"
+                    aria-label="Ver opiniones">
+                    <i class="bi bi-chat-square-text"></i>
+                  </button>
+
+                  <button class="btn btn-outline-success btn-sm" (click)="activarCuenta(usuario)"
+                    [disabled]="cuentaActiva(usuario)">
+                    Activar
+                  </button>
+
+                  <button class="btn btn-outline-danger btn-sm" (click)="desactivarCuenta(usuario)"
+                    [disabled]="!cuentaActiva(usuario)">
+                    Desactivar
+                  </button>
+
+                  <button *ngIf="rolGestionActivo === 'empresario'" class="btn btn-dark btn-sm"
+                    (click)="seleccionarEmpresario(usuario)" [disabled]="empresarioSeleccionadoEstaCargando(usuario)">
+                    {{ empresarioSeleccionadoEstaCargando(usuario) ? 'Cargando...' : 'Ver negocios' }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div #bloqueNegociosEmpresario class="card border-0 shadow-sm mt-3"
+            *ngIf="usuarioSeleccionado && rolGestionActivo === 'empresario'">
+            <div class="card-header bg-white">
+              <h5 class="mb-0">Negocios de {{ usuarioSeleccionado.nombre }}</h5>
+            </div>
+
+            <div class="card-body"
+              *ngIf="!cargandoNegociosEmpresario || negociosEmpresario.length > 0; else loadingNegocios">
+              <div *ngIf="actualizandoNegociosEmpresario" class="alert alert-light border py-2 px-3 small mb-3">
+                Actualizando negocios...
+              </div>
+              <div class="business-row row g-2" *ngFor="let negocio of negociosEmpresario">
+                <div class="col-12 col-xl-7">
+                  <strong class="d-block">{{ negocio.nombre_empresa }}</strong>
+                  <p class="mb-0 text-break">{{ negocio.categoria_empresa }} | {{ negocio.direccion_empresa }}</p>
+                </div>
+
+                <div
+                  class="col-12 col-xl-5 d-flex align-items-start align-items-xl-center justify-content-xl-end gap-2 flex-wrap">
+                  <span class="badge" [class.text-bg-success]="negocioActivo(negocio)"
+                    [class.text-bg-secondary]="!negocioActivo(negocio)">
+                    {{ negocioActivo(negocio) ? 'Activo' : 'De baja' }}
+                  </span>
+
+                  <button class="btn btn-outline-primary btn-sm"
+                    (click)="verOpinionesLugar(negocio.id, 'Opiniones de ' + negocio.nombre_empresa)">
+                    Comentarios
+                  </button>
+
+                  <button class="btn btn-outline-warning btn-sm" (click)="alternarEstadoNegocio(negocio)">
+                    {{ negocioActivo(negocio) ? 'Dar de baja' : 'Reactivar' }}
+                  </button>
+
+                  <button class="btn btn-outline-secondary btn-sm" (click)="alternarDetalleNegocio(negocio)">
+                    {{ negocioExpandidoId === negocio.id ? 'Ocultar sucursales' : 'Ver sucursales' }}
+                  </button>
+                </div>
+
+                <div class="branch-box" *ngIf="negocioExpandidoId === negocio.id">
+                  <div class="branch-row row g-2" *ngFor="let sucursal of sucursalesDeNegocio(negocio)">
+                    <div class="col-12 col-xl-7">
+                      <strong class="d-block">Sucursal #{{ sucursal.idSucursal }}</strong>
+                      <p class="mb-0 text-break">{{ sucursal.direccion || 'Direccion no disponible' }}</p>
+                    </div>
+
+                    <div
+                      class="col-12 col-xl-5 d-flex align-items-start align-items-xl-center justify-content-xl-end gap-2 flex-wrap">
+                      <span class="badge" [class.text-bg-success]="sucursalActiva(sucursal)"
+                        [class.text-bg-secondary]="!sucursalActiva(sucursal)">
+                        {{ sucursalActiva(sucursal) ? 'Activa' : 'De baja' }}
+                      </span>
+
+                      <button class="btn btn-outline-primary btn-sm"
+                        (click)="verOpinionesLugar('sucursal-' + sucursal.idSucursal, 'Opiniones de sucursal')">
+                        Comentarios
+                      </button>
+
+                      <button class="btn btn-outline-warning btn-sm" (click)="alternarEstadoSucursal(sucursal)">
+                        {{ sucursalActiva(sucursal) ? 'Dar de baja' : 'Reactivar' }}
+                      </button>
+                    </div>
+                  </div>
+
+                  <p *ngIf="sucursalesDeNegocio(negocio).length === 0" class="text-muted mb-0">
+                    Este negocio no tiene sucursales registradas.
+                  </p>
+                </div>
+              </div>
+
+              <p *ngIf="negociosEmpresario.length === 0" class="text-muted mb-0">
+                Este empresario no tiene negocios registrados.
+              </p>
+            </div>
+          </div>
+        </section>
+      </main>
+    </section>
+  </div>
 </div>
+
+<div class="modal-overlay" *ngIf="mostrarModalCategoria" (click)="cerrarModalCategoria()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <h4>{{ draftCategoria.id ? 'Editar categoria' : 'Nueva categoria' }}</h4>
+
+    <div class="mb-3">
+      <label class="form-label">Nombre de la categoria</label>
+      <input class="form-control" [(ngModel)]="draftCategoria.nombre" placeholder="Ejemplo: Tecnologia" />
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Icono principal</label>
+      <div class="icon-picker-grid">
+        <button type="button" class="icon-choice" *ngFor="let icono of iconosCategoriaDisponibles"
+          [class.selected]="draftCategoria.icono === icono" (click)="draftCategoria.icono = icono">
+          <i class="bi" [ngClass]="icono"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Icono para mapa</label>
+      <div class="icon-picker-grid map-grid">
+        <button type="button" class="icon-choice" *ngFor="let icono of iconosMapaDisponibles"
+          [class.selected]="draftCategoria.iconoMapa === icono" (click)="draftCategoria.iconoMapa = icono">
+          <i class="bi" [ngClass]="icono"></i>
+        </button>
+      </div>
+      <small class="text-muted">Este valor queda listo para conectarse con el marcador en Google Maps.</small>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2">
+      <button class="btn btn-outline-secondary" (click)="cerrarModalCategoria()">Cancelar</button>
+      <button class="btn btn-primary" (click)="guardarCategoria()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" *ngIf="mostrarModalOpiniones" (click)="cerrarModalOpiniones()">
+  <div class="modal-card modal-lg-custom" (click)="$event.stopPropagation()">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4 class="mb-0">{{ tituloModalOpiniones }}</h4>
+      <button class="btn-close" (click)="cerrarModalOpiniones()"></button>
+    </div>
+
+    <div *ngIf="!cargandoOpinionesModal; else loadingOpiniones">
+      <div *ngFor="let opinion of opinionesModal" class="opinion-row"
+        [class.hidden-opinion]="opinionEstaOculta(opinion)">
+        <div>
+          <strong>{{ opinion.usuarioNombre }} - {{ opinion.calificacion }} estrella(s)</strong>
+          <p>{{ opinion.texto || 'Sin comentario' }}</p>
+          <small>{{ formatearFecha(opinion.fechaCreacion) }}</small>
+        </div>
+        <button class="btn btn-sm" [class.btn-outline-warning]="!opinionEstaOculta(opinion)"
+          [class.btn-outline-success]="opinionEstaOculta(opinion)" (click)="alternarVisibilidadOpinion(opinion)">
+          {{ opinionEstaOculta(opinion) ? 'Mostrar' : 'Ocultar' }}
+        </button>
+      </div>
+
+      <p *ngIf="opinionesModal.length === 0" class="text-muted mb-0">No hay opiniones registradas.</p>
+    </div>
+  </div>
+</div>
+
+<ng-template #loadingPanel>
+  <section class="loading-container">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p>Cargando informacion de administrador...</p>
+  </section>
+</ng-template>
+
+<ng-template #loadingOpiniones>
+  <section class="loading-container modal-loading">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p>Cargando opiniones...</p>
+  </section>
+</ng-template>
+
+<ng-template #loadingNegocios>
+  <section class="loading-container modal-loading">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p>Cargando negocios del empresario...</p>
+  </section>
+</ng-template>

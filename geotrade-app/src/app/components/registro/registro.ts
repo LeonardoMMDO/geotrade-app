@@ -13,49 +13,50 @@ import { UsuarioService } from '../../services/usuario.service';
 })
 export class RegistroComponent {
   mostrarModal = false;
-  
-  usuario = { 
-    nombre: '', 
-    correo: '', 
+  mostrarPassword = false;
+  aceptaTerminos = false;
+
+  usuario = {
+    nombre: '',
+    correo: '',
     telefono: '',
     pass: '',
-    rol: ''  
+    rol: ''
   };
 
+  togglePassword() {
+    this.mostrarPassword = !this.mostrarPassword;
+  }
 
-  constructor(private router: Router, private usuarioService: UsuarioService) {}
+
+  constructor(private router: Router, private usuarioService: UsuarioService) { }
 
   abrirConfirmacion() {
     this.mostrarModal = true;
   }
 
- confirmarRegistro() {
-  const rolSeleccionado = this.usuario.rol;
-  this.mostrarModal = false;
+  confirmarRegistro() {
+    this.mostrarModal = false;
 
-  // IMPORTANTE: Asegúrate de que los campos coincidan con tu modelo Java
-  this.usuarioService.registrarUsuario(this.usuario).subscribe({
-    next: (response) => {
-      console.log("Registro exitoso:", response);
-      // Opcional: Guardar el nombre de una vez para que al redirigir ya esté ahí
-      localStorage.setItem('nombreUsuario', this.usuario.nombre);
-      this.ejecutarRedireccion(rolSeleccionado);
-    },
-    error: (err) => {
-      console.error("Fallo de conexión:", err);
-      alert("No se pudo conectar con el servidor Java.");
-    }
-  });
-}
-
-// Función auxiliar para no repetir código
-ejecutarRedireccion(rol: string) {
-  if (rol === 'usuario') {
-    this.router.navigate(['/explorador']);
-  } else if (rol === 'empresario') {
-    this.router.navigate(['/dashboard-empresario']);
-  } else {
-    this.router.navigate(['/login']);
+    // IMPORTANTE: Asegúrate de que los campos coincidan con tu modelo Java
+    this.usuarioService.registrarUsuario(this.usuario).subscribe({
+      next: (response) => {
+        console.log("Registro exitoso:", response);
+        this.limpiarSesionActiva();
+        this.router.navigate(['/login'], { replaceUrl: true });
+      },
+      error: (err) => {
+        console.error("Fallo de conexión:", err);
+        alert("No se pudo conectar con el servidor Java.");
+      }
+    });
   }
-}
+
+  private limpiarSesionActiva() {
+    localStorage.removeItem('usuario');
+    localStorage.removeItem('nombreUsuario');
+    localStorage.removeItem('correoUsuario');
+    localStorage.removeItem('telefonoUsuario');
+    localStorage.removeItem('passwordUsuario');
+  }
 }

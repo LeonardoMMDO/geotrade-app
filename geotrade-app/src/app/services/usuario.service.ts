@@ -8,10 +8,14 @@ import { Observable } from 'rxjs';
 export class UsuarioService {
   private API_URL = 'http://localhost:8080/api/usuarios';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   login(datos: any): Observable<any> {
     return this.http.post(`${this.API_URL}/login`, datos);
+  }
+
+  getUsuariosDebug(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.API_URL}/Lista-debug`);
   }
 
   registrarUsuario(usuario: any): Observable<any> {

@@ -11,54 +11,80 @@ import { UsuarioService } from '../../services/usuario.service';
   templateUrl: './login.html',
   styleUrl: './login.css',
 })
-export class LoginComponent {  
-  
+export class LoginComponent {
+
+  showPassword: boolean = false;
+
   loginData = {
     correo: '',
     pass: ''
   };
 
-  constructor(private router: Router, private usuarioService: UsuarioService) {}
+  constructor(private router: Router, private usuarioService: UsuarioService) { }
 
   iniciarSesion(form: any) {
-  if (form.valid) {
-    this.usuarioService.login(this.loginData).subscribe({
-      next: (usuarioRecibido) => {
-        if (usuarioRecibido) {
-          localStorage.setItem('usuario', JSON.stringify(usuarioRecibido));
-          localStorage.setItem('nombreUsuario', usuarioRecibido.nombre);
-          localStorage.setItem('correoUsuario', this.loginData.correo);
-          localStorage.setItem('telefonoUsuario', usuarioRecibido.telefono || '');
-          localStorage.setItem('passwordUsuario', usuarioRecibido.pass || '');
+    if (form.valid) {
+      const correo = this.loginData.correo.trim().toLowerCase();
+      const pass = this.loginData.pass.trim();
 
-          // Redirige según el rol que venga de la BD
-          const rutas: Record<string, string> = {
-            'admin':      '/admin',
-            'empresario': '/dashboard-empresario',
-            'explorador': '/explorador'
-          };
+      // Acceso directo para la nueva interfaz de administrador solicitada.
+      if (correo === 'geotradeconoce@gmail.com' && pass === 'geonegocios') {
+        const adminLocal = {
+          id: -1,
+          nombre: 'Administrador GeoTrade',
+          correo,
+          telefono: '',
+          pass,
+          rol: 'admin'
+        };
 
-          const ruta = rutas[usuarioRecibido.rol] ?? '/explorador';
-          this.router.navigate([ruta]);
-        }
-      },
-      error: (err) => {
-        console.error("Error en login:", err);
-        let mensaje = "Datos incorrectos. Verifica tu correo y contraseña.";
-        
-        if (err.status === 401) {
-          mensaje = "Credenciales incorrectas. Verifica tu correo y contraseña.";
-        } else if (err.status === 400) {
-          mensaje = err.error?.error || "Por favor completa todos los campos.";
-        } else if (err.status === 0) {
-          mensaje = "No se pudo conectar al servidor. Verifica que está en línea.";
-        }
-        
-        alert(mensaje);
+        localStorage.setItem('usuario', JSON.stringify(adminLocal));
+        localStorage.setItem('nombreUsuario', adminLocal.nombre);
+        localStorage.setItem('correoUsuario', correo);
+        localStorage.setItem('telefonoUsuario', '');
+        localStorage.setItem('passwordUsuario', pass);
+
+        this.router.navigate(['/admin']);
+        return;
       }
-    });
-  } else {
-    alert("Por favor, rellena todos los campos.");
+
+      this.usuarioService.login(this.loginData).subscribe({
+        next: (usuarioRecibido) => {
+          if (usuarioRecibido) {
+            localStorage.setItem('usuario', JSON.stringify(usuarioRecibido));
+            localStorage.setItem('nombreUsuario', usuarioRecibido.nombre);
+            localStorage.setItem('correoUsuario', this.loginData.correo);
+            localStorage.setItem('telefonoUsuario', usuarioRecibido.telefono || '');
+            localStorage.setItem('passwordUsuario', usuarioRecibido.pass || '');
+
+            // Redirige según el rol que venga de la BD
+            const rutas: Record<string, string> = {
+              'admin': '/admin',
+              'empresario': '/dashboard-empresario',
+              'explorador': '/explorador'
+            };
+
+            const ruta = rutas[usuarioRecibido.rol] ?? '/explorador';
+            this.router.navigate([ruta]);
+          }
+        },
+        error: (err) => {
+          console.error("Error en login:", err);
+          let mensaje = "Datos incorrectos. Verifica tu correo y contraseña.";
+
+          if (err.status === 401) {
+            mensaje = "Credenciales incorrectas. Verifica tu correo y contraseña.";
+          } else if (err.status === 400) {
+            mensaje = err.error?.error || "Por favor completa todos los campos.";
+          } else if (err.status === 0) {
+            mensaje = "No se pudo conectar al servidor. Verifica que está en línea.";
+          }
+
+          alert(mensaje);
+        }
+      });
+    } else {
+      alert("Por favor, rellena todos los campos.");
+    }
   }
-}
 }

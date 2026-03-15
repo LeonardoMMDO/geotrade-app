@@ -6,7 +6,7 @@ export interface CategoryItem {
 
 // keep values in lowercase for consistency with search and storage
 export const CATEGORIES: CategoryItem[] = [
-  { label: 'Restaurantes', value: 'restaurantes', icon: 'bi-fork-knife' },
+  { label: 'Restaurantes', value: 'restaurantes', icon: 'bi-cup-hot-fill' },
   { label: 'Refaccionarias', value: 'refaccionarias', icon: 'bi-car-front-fill' },
   { label: 'Estética', value: 'estética', icon: 'bi-scissors' },
   { label: 'Abarrotes', value: 'abarrotes', icon: 'bi-cart' },

@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, ViewEncapsulation, OnDestroy, OnInit, ViewChild, ElementRef, NgZone, ChangeDetectorRef } from '@angular/core';
+import { Component, AfterViewInit, ViewEncapsulation, OnDestroy, OnInit, ViewChild, ElementRef, NgZone, ChangeDetectorRef, HostListener } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { UsuarioService } from '../../services/usuario.service';
@@ -7,8 +7,10 @@ import { GoogleMapsLoaderService } from '../../services/google-maps-loader.servi
 import { NegocioService } from '../../services/negocio.service';
 import { OpinionService } from '../../services/opinion.service';
 import { SucursalService } from '../../services/sucursal.service';
+import { CategoriaService } from '../../services/categoria.service';
 import { Negocio } from '../../model/negocio';
 import { CATEGORIES } from '../../model/categories';
+import { Categoria, ExplorerCategoryItem } from '../../model/categoria';
 import { Sucursal } from '../../model/sucursal';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -70,21 +72,26 @@ export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
   currentStepIndex: number = 0;
   showPlaceDetail: boolean = false;
   showCategories: boolean = true;
+  mobileSidebarOpen: boolean = false;
+  isMobileScreen: boolean = false;
+  showDescriptionPanel: boolean = false;
+  private viewportInitialized: boolean = false;
   private searchToken = 0;
 
   // --- USER DATA ---
   nombreDisplay: string = '';
   correoDisplay: string = '';
   telefonoDisplay: string = '';
-  passwordDisplay: string = '';
   usuarioId: number | null = null; // ID del usuario logueado
-  mostrarPassword: boolean = false;
   categoriaActiva: string = ''; // currently selected category
-  categories = CATEGORIES;
+  categories: ExplorerCategoryItem[] = this.getFallbackCategories();
 
   // --- OPINIONES / REVIEWS ---
   showReviewsModal: boolean = false;
   placeReviews: any[] = [];
+  isLoadingReviews: boolean = false;
+  private reviewsLoadingTimer: ReturnType<typeof setTimeout> | null = null;
+  private reviewsRequestToken = 0;
   newReview = {
     rating: 5,
     text: ''
@@ -96,18 +103,24 @@ export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
     private usuarioService: UsuarioService,
     private mapsLoader: GoogleMapsLoaderService,
     private ngZone: NgZone,
+    private categoriaService: CategoriaService,
     private negocioService: NegocioService,
     private opinionService: OpinionService,
     private sucursalService: SucursalService,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) { }
 
 
 
   ngOnInit() {
-
+    this.sincronizarViewport();
+    this.cargarCategoriasDesdeBD();
     this.cargarDatos();
+  }
 
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.sincronizarViewport();
   }
 
 
@@ -121,8 +134,6 @@ export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.correoDisplay = localStorage.getItem('correoUsuario') || '';
 
     this.telefonoDisplay = localStorage.getItem('telefonoUsuario') || '';
-
-    this.passwordDisplay = localStorage.getItem('passwordUsuario') || '';
 
     // Obtener ID del usuario
 
@@ -151,7 +162,6 @@ export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
   ngAfterViewInit() {
     const profileBtn = document.getElementById('profileBtn');
     const dropdown = document.getElementById('profileDropdown');
-    const categories = document.querySelectorAll('.category-item');
     const btnOpenEdit = document.getElementById('openEdit');
     const btnCancelEdit = document.getElementById('btnCancelEdit');
     const btnSaveEdit = document.getElementById('btnSaveEdit');
@@ -180,8 +190,7 @@ export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
         const datosActualizados = {
           nombre: this.nombreDisplay,
           correo: this.correoDisplay,
-          telefono: this.telefonoDisplay,
-          pass: this.passwordDisplay
+          telefono: this.telefonoDisplay
         };
         this.usuarioService.actualizarUsuario(id, datosActualizados).subscribe({
           next: (usuarioActualizado) => {
@@ -189,7 +198,6 @@ export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
             localStorage.setItem('nombreUsuario', usuarioActualizado.nombre);
             localStorage.setItem('correoUsuario', usuarioActualizado.correo);
             localStorage.setItem('telefonoUsuario', usuarioActualizado.telefono || '');
-            localStorage.setItem('passwordUsuario', usuarioActualizado.pass || '');
             if (editSection && mapPlaceholder) {
               editSection.style.display = 'none';
               mapPlaceholder.style.display = 'flex';
@@ -203,8 +211,6 @@ export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
         });
       });
     }
-
-    // categories are now handled via Angular template (click bindings)
 
     if (profileBtn && dropdown) {
       profileBtn.addEventListener('click', (e) => {
@@ -226,7 +232,7 @@ export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
     // Close dropdown only when clicking outside user-profile area
     this.clickListener = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
-      if (dropdown && !target.closest('.user-profile') && !target.closest('.btn-toggle-password')) {
+      if (dropdown && !target.closest('.user-profile')) {
         dropdown.classList.remove('show');
       }
     };
@@ -256,19 +262,23 @@ export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.limpiarMarcadores();
   }
 
-  seleccionarCategoria(tipo: string) {
-    // console.log('categoría seleccionada:', tipo);
-    this.categoriaActiva = tipo;
+  seleccionarCategoria(tipo: string, etiqueta?: string) {
+    const tipoNormalizado = this.normalizeCategoryName(tipo);
+    this.categoriaActiva = tipoNormalizado;
     // hide any open place detail when selecting a new category
     this.showPlaceDetail = false;
     this.showCategories = true;
+    this.showDescriptionPanel = false;
     this.cdr.markForCheck(); // Force change detection
     // recenter map when searching
     if (this.map) {
       const center = new google.maps.LatLng(this.lat, this.lng);
       this.map.setCenter(center);
     }
-    this.buscarLugares(tipo.toLowerCase());
+    this.buscarLugares(tipoNormalizado, etiqueta || tipo);
+    if (this.isMobileScreen) {
+      this.mobileSidebarOpen = false;
+    }
   }
 
   private limpiarMarcadores() {
@@ -323,7 +333,7 @@ export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
     // no ponemos map todavía hasta que el usuario pida indicaciones
   }
 
-  buscarLugares(tipo: string) {
+  buscarLugares(tipo: string, etiquetaCategoria: string) {
     const currentToken = ++this.searchToken;
     // console.log('buscando lugares para', tipo);
     if (!this.map) {
@@ -332,12 +342,11 @@ export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     // limpiar marcadores previos
     this.limpiarMarcadores();
-    
+
     const service = new google.maps.places.PlacesService(this.map);
     const mapping: { [key: string]: string } = {
       restaurantes: 'restaurant',
       refaccionarias: 'car_repair',
-      estética: 'beauty_salon',
       estetica: 'beauty_salon',
       abarrotes: 'grocery_or_supermarket',
       farmacias: 'pharmacy',
@@ -346,16 +355,23 @@ export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
       florería: 'florist',
       floreria: 'florist',
       boutique: 'clothing_store',
-      papelerías: 'book_store',
       papelerias: 'book_store',
       veterinarias: 'veterinary_care'
     };
     const tipoNormalizado = this.normalizeCategoryName(tipo);
     const request: google.maps.places.PlaceSearchRequest = {
       location: { lat: this.lat, lng: this.lng },
-      radius: 2000,
-      type: mapping[tipo] || mapping[tipoNormalizado] || 'store'
+      radius: 2000
     };
+
+    const googleType = mapping[tipoNormalizado];
+    if (googleType) {
+      (request as any).type = googleType;
+    } else {
+      (request as any).type = 'store';
+      (request as any).keyword = etiquetaCategoria;
+    }
+
     service.nearbySearch(request, (results, status) => {
       if (currentToken !== this.searchToken) return;
       if (status === google.maps.places.PlacesServiceStatus.OK && results) {
@@ -387,7 +403,7 @@ export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
             const bizCategory = this.normalizeCategoryName(biz.categoria_empresa || '');
             if (bizCategory.includes(tipoNormalizado) || tipoNormalizado.includes(bizCategory) || bizCategory === tipoNormalizado) {
               const pos = new google.maps.LatLng(biz.latitud!, biz.longitud!);
-              
+
               const marker = new google.maps.Marker({
                 position: pos,
                 map: this.map,
@@ -395,7 +411,7 @@ export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
                 icon: this.getBizMarkerIcon(biz.categoria_empresa),
                 zIndex: 999 // Mostrar muy por encima de Google Places
               });
-              
+
               marker.addListener('click', () => this.ngZone.run(() => this.showNegocioDetail(biz)));
               this.markers.push(marker);
 
@@ -444,6 +460,7 @@ export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
   onPlaceMarkerClick(place: google.maps.places.PlaceResult) {
     console.log('✅ Marcador clickeado:', place.name);
     if (!this.map) return;
+    this.resetReviewsState();
     this.selectedBiz = null;
     const service = new google.maps.places.PlacesService(this.map);
     if (place.place_id) {
@@ -457,16 +474,21 @@ export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
             this.placeDisplayName = (this.selectedPlace.name || this.selectedPlace.formatted_phone_number || '') as string;
             this.placeDisplayAddress = (this.selectedPlace.formatted_address || (this.selectedPlace as any).vicinity || this.selectedPlace.name || '') as string;
             this.routeSteps = []; // clear previous route steps
+            this.showDescriptionPanel = false;
             console.log('📌 details.name =', (details as any).name);
           } else {
             this.selectedPlace = place;
             this.placeDisplayName = place.name || '';
             this.placeDisplayAddress = (place.vicinity || place.name || '') as string;
+            this.showDescriptionPanel = false;
             console.log('ℹ️ Usando objeto place (sin details completos):', place.name);
           }
           // Actualizar vistas inmediatamente para evitar estado desincronizado
           this.showPlaceDetail = true;
           this.showCategories = false;
+          if (this.isMobileScreen) {
+            this.mobileSidebarOpen = true;
+          }
           try {
             this.cdr.detectChanges(); // force immediate change detection
           } catch (e) {
@@ -480,8 +502,12 @@ export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
       this.selectedPlace = place;
       this.placeDisplayName = place.name || '';
       this.placeDisplayAddress = (place.vicinity || place.name || '') as string;
+      this.showDescriptionPanel = false;
       this.showPlaceDetail = true;
       this.showCategories = false;
+      if (this.isMobileScreen) {
+        this.mobileSidebarOpen = true;
+      }
       this.cdr.markForCheck(); // Force change detection
       console.log('✅ Sin place_id. showPlaceDetail=true, showCategories=false');
     }
@@ -489,12 +515,17 @@ export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   showNegocioDetail(biz: Negocio) {
     console.log('✅ Negocio clickeado:', biz.nombre_empresa);
+    this.resetReviewsState();
     this.selectedPlace = null;
     this.selectedBiz = biz;
     this.placeDisplayName = biz.nombre_empresa || '';
     this.placeDisplayAddress = biz.direccion_empresa || '';
+    this.showDescriptionPanel = false;
     this.showPlaceDetail = true;
     this.showCategories = false;
+    if (this.isMobileScreen) {
+      this.mobileSidebarOpen = true;
+    }
     try {
       this.cdr.detectChanges();
     } catch (e) {
@@ -504,9 +535,14 @@ export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   backToCategories() {
+    this.resetReviewsState();
     this.showPlaceDetail = false;
     this.showCategories = true;
     this.selectedPlace = null;
+    this.showDescriptionPanel = false;
+    if (this.isMobileScreen) {
+      this.mobileSidebarOpen = true;
+    }
     // remove route when we hide detail
     if (this.directionsRenderer) {
       this.directionsRenderer.setMap(null);
@@ -568,6 +604,9 @@ export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   openDirections() {
     if (!this.map) return;
+    if (this.isMobileScreen) {
+      this.mobileSidebarOpen = false;
+    }
     // clear any previous route
     if (this.directionsRenderer) {
       this.directionsRenderer.setMap(null);
@@ -631,6 +670,132 @@ export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!this.selectedPlace?.formatted_phone_number) return;
     const tel = `tel:${this.selectedPlace.formatted_phone_number}`;
     window.location.href = tel;
+  }
+
+  toggleSidebar(): void {
+    if (!this.isMobileScreen) return;
+    this.mobileSidebarOpen = !this.mobileSidebarOpen;
+  }
+
+  closeSidebar(): void {
+    if (!this.isMobileScreen) return;
+    this.mobileSidebarOpen = false;
+  }
+
+  trackByCategory(index: number, categoria: ExplorerCategoryItem): number {
+    return Number.isFinite(categoria.id) ? categoria.id : index;
+  }
+
+  shouldShowDetailsButton(): boolean {
+    if (this.selectedBiz) {
+      return true;
+    }
+    return this.getExternalDescription().length > 0;
+  }
+
+  toggleDescriptionPanel(): void {
+    this.showDescriptionPanel = !this.showDescriptionPanel;
+  }
+
+  getSelectedDescription(): string {
+    if (this.selectedBiz) {
+      const desc = (this.selectedBiz.descripcion_empresa || '').trim();
+      return desc || 'Este negocio todavia no ha agregado una descripcion.';
+    }
+    return this.getExternalDescription();
+  }
+
+  private getExternalDescription(): string {
+    const placeAny = this.selectedPlace as any;
+    const summary = placeAny?.editorial_summary?.overview;
+    return typeof summary === 'string' ? summary.trim() : '';
+  }
+
+  private sincronizarViewport(): void {
+    this.isMobileScreen = window.innerWidth <= 991;
+
+    if (!this.isMobileScreen) {
+      this.mobileSidebarOpen = true;
+      this.viewportInitialized = true;
+      return;
+    }
+
+    if (!this.viewportInitialized) {
+      this.mobileSidebarOpen = true;
+      this.viewportInitialized = true;
+    }
+  }
+
+  private cargarCategoriasDesdeBD(): void {
+    this.categoriaService.getCategorias().subscribe({
+      next: (lista: Categoria[]) => {
+        const listaValida = Array.isArray(lista) ? lista : [];
+        const habilitadas = listaValida.filter((categoria) => categoria.habilitada !== false);
+        const categoriasMapeadas = habilitadas.map((categoria) => this.mapCategoriaExplorador(categoria));
+
+        if (categoriasMapeadas.length) {
+          this.categories = categoriasMapeadas;
+        } else {
+          this.categories = this.getFallbackCategories();
+        }
+        this.refrescarVista();
+      },
+      error: (err) => {
+        console.error('No se pudieron cargar categorias desde BD', err);
+        this.categories = this.getFallbackCategories();
+        this.refrescarVista();
+      }
+    });
+  }
+
+  private refrescarVista(): void {
+    try {
+      this.cdr.detectChanges();
+    } catch {
+      this.cdr.markForCheck();
+    }
+  }
+
+  private mapCategoriaExplorador(categoria: Categoria): ExplorerCategoryItem {
+    const label = (categoria.nombre || '').trim() || 'Categoria';
+    const value = this.normalizeCategoryName(label);
+    return {
+      id: Number(categoria.id),
+      label,
+      value,
+      icon: this.getResolvedCategoryIcon(value, categoria.icono),
+      mapIcon: (categoria.iconoMapa || '').trim() || 'bi-geo-alt-fill',
+      enabled: Boolean(categoria.habilitada)
+    };
+  }
+
+  private getResolvedCategoryIcon(value: string, icono: string | null | undefined): string {
+    const iconoLimpio = (icono || '').trim();
+
+    // Reemplaza iconos no soportados por bootstrap-icons en esta version.
+    if (iconoLimpio === 'bi-fork-knife' || value === 'restaurantes') {
+      return 'bi-cup-hot-fill';
+    }
+
+    return iconoLimpio || this.getFallbackIcon(value);
+  }
+
+  private getFallbackCategories(): ExplorerCategoryItem[] {
+    return CATEGORIES.map((categoria, index) => ({
+      id: index + 1,
+      label: categoria.label,
+      value: this.normalizeCategoryName(categoria.value || categoria.label),
+      icon: categoria.icon || 'bi-grid-fill',
+      mapIcon: 'bi-geo-alt-fill',
+      enabled: true,
+    }));
+  }
+
+  private getFallbackIcon(value: string): string {
+    const match = CATEGORIES.find((categoria) =>
+      this.normalizeCategoryName(categoria.value || categoria.label) === value,
+    );
+    return match?.icon || 'bi-grid-fill';
   }
 
   private normalizeCategoryName(value: string | null | undefined): string {
@@ -747,9 +912,15 @@ export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   openReviewsModal() {
     this.showReviewsModal = true;
+    this.placeReviews = [];
+    this.detenerLoaderOpiniones();
+    const currentRequestToken = ++this.reviewsRequestToken;
+    this.iniciarLoaderOpiniones(currentRequestToken);
     const keys = this.getOpinionFetchKeys();
     if (!keys.length) {
       this.placeReviews = [];
+      this.detenerLoaderOpiniones();
+      this.refrescarVista();
       return;
     }
 
@@ -757,6 +928,8 @@ export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
       keys.map((k) => this.opinionService.getOpinions(k).pipe(catchError(() => of([]))))
     ).subscribe({
       next: (groups) => {
+        if (currentRequestToken !== this.reviewsRequestToken || !this.showReviewsModal) return;
+        this.detenerLoaderOpiniones();
         const merged = (groups || []).flat();
         const dedup = new Map<string, any>();
         merged.forEach((item: any) => {
@@ -770,16 +943,45 @@ export class ExploradorComponent implements OnInit, AfterViewInit, OnDestroy {
           text: op.texto,
           timestamp: op.fechaCreacion
         }));
+        this.refrescarVista();
       },
       error: err => {
+        if (currentRequestToken !== this.reviewsRequestToken || !this.showReviewsModal) return;
+        this.detenerLoaderOpiniones();
         console.warn('Error cargando opiniones', err);
         this.placeReviews = [];
+        this.refrescarVista();
       }
     });
   }
 
   closeReviewsModal() {
     this.showReviewsModal = false;
+    this.detenerLoaderOpiniones();
+    this.reviewsRequestToken++;
+  }
+
+  private resetReviewsState(): void {
+    this.showReviewsModal = false;
+    this.placeReviews = [];
+    this.detenerLoaderOpiniones();
+    this.reviewsRequestToken++;
+  }
+
+  private iniciarLoaderOpiniones(requestToken: number): void {
+    this.reviewsLoadingTimer = setTimeout(() => {
+      if (requestToken !== this.reviewsRequestToken || !this.showReviewsModal) return;
+      this.isLoadingReviews = true;
+      this.refrescarVista();
+    }, 350);
+  }
+
+  private detenerLoaderOpiniones(): void {
+    if (this.reviewsLoadingTimer) {
+      clearTimeout(this.reviewsLoadingTimer);
+      this.reviewsLoadingTimer = null;
+    }
+    this.isLoadingReviews = false;
   }
 
   submitReview() {
