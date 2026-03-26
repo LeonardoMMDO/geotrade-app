@@ -1,0 +1,534 @@
+/* =========================================
+   ANIMACIÓN DE ENTRADA 
+   Afecta a todo excepto a las nubes
+   ========================================= */
+
+/* 1. Definición del movimiento (Deslizar + Opacidad + Desenfoque) */
+@keyframes reveal_epic {
+    0% {
+        opacity: 0;
+        transform: translateY(40px);
+        filter: blur(10px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0px);
+    }
+}
+
+/* 2. Aplicación de la animación a los elementos base */
+.navbar_index,
+.world-bg_index,
+.main-logo_index,
+.pregunta-box_index,
+.hero-actions_index {
+    animation: reveal_epic 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* 3. Tiempos de salida (Staggered Delays) */
+
+/* El fondo aparece primero */
+.world-bg_index {
+    animation-delay: 0.1s;
+    animation-duration: 1.5s;
+    /* El fondo entra más lento para dar profundidad */
+}
+
+/* La barra de navegación */
+.navbar_index {
+    animation-delay: 0.3s;
+}
+
+/* El logo de GeoTrade */
+.main-logo_index {
+    animation-delay: 0.6s;
+}
+
+/* El cuadro de texto */
+.pregunta-box_index {
+    animation-delay: 0.9s;
+}
+
+/* El botón de "¡Comenzar!" es el último en entrar */
+.hero-actions_index {
+    animation-delay: 1.2s;
+}
+
+
+/* =========================================
+   GEOTRADE FINAL
+   ========================================= */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    overflow-x: hidden;
+}
+
+
+/* =============================
+   NAVBAR
+============================= */
+
+.navbar_index {
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    width: 92%;
+    max-width: 1200px;
+
+    margin: 30px auto;
+
+    background: #203147;
+
+    border-radius: 50px;
+
+    padding: 12px 40px;
+
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+
+    z-index: 1000;
+}
+
+.logo_index {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo_index h1 {
+    font-size: clamp(14px, 2vw, 24px);
+    color: #fff;
+}
+
+.pin-icon_index {
+    height: 28px;
+}
+
+
+.nav-links_index {
+    display: flex;
+    list-style: none;
+    gap: 30px;
+}
+
+.nav-links_index a {
+
+    text-decoration: none;
+    color: white;
+
+    font-size: 16px;
+    font-weight: 500;
+
+    transition: .3s;
+}
+
+.nav-links_index a:hover {
+
+    color: #3b82f6;
+    text-shadow: 0 0 10px rgba(59, 130, 246, 0.6);
+
+}
+
+
+/* =============================
+   HERO
+============================= */
+
+.hero_index {
+
+    height: 100vh;
+    width: 100%;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    position: relative;
+    overflow: hidden;
+
+}
+
+
+/* Fondo planeta */
+
+.world-bg_index {
+
+    position: absolute;
+
+    top: 0;
+    left: 0;
+
+    width: 100%;
+    height: 100%;
+
+    background-image: url('/assets/recursos/fondo.png');
+    background-size: cover;
+    background-position: center;
+
+    z-index: 1;
+
+}
+
+
+/* Contenido */
+
+.hero-content_index {
+
+    position: relative;
+    z-index: 10;
+
+    margin-top: 0;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    width: 100%;
+
+}
+
+
+/* Logo */
+
+.main-logo_index {
+
+    max-width: 650px;
+    width: 85%;
+
+    filter: drop-shadow(0px 8px 15px rgba(0, 0, 0, 0.3));
+
+    margin: 0 auto 15px;
+
+}
+
+
+/* =============================
+   TEXTO CENTRAL
+============================= */
+
+.pregunta-box_index {
+
+    width: fit-content;
+
+    padding: 15px 60px;
+
+    background: radial-gradient(circle,
+            rgba(255, 255, 255, 0.8) 0%,
+            rgba(255, 255, 255, 1) 100%);
+
+    border-radius: 100px;
+
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+
+    margin-top: 34px;
+
+}
+
+.pregunta-box_index p {
+
+    font-size: clamp(1rem, 2.2vw, 1.8rem);
+
+    color: #222;
+
+    white-space: nowrap;
+
+}
+
+
+/* =============================
+   BOTÓN COMENZAR
+============================= */
+
+.hero-actions_index {
+
+    margin-top: 100px;
+
+    width: 100%;
+
+    display: flex;
+    justify-content: center;
+
+}
+
+
+/* contenedor botón */
+
+.btn-anchor_index {
+
+    width: 95%;
+    max-width: 500px;
+
+    text-decoration: none;
+    display: block;
+
+}
+
+
+/* botón */
+
+.btn-green_index {
+
+    width: 100%;
+
+    background-color: #6d8e12;
+
+    color: white;
+
+    padding: 22px 0;
+
+    border-radius: 50px;
+
+    border: none;
+
+    font-weight: 800;
+
+    font-size: 1.6rem;
+
+    cursor: pointer;
+
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+
+    transition: all .3s ease;
+
+}
+
+
+.btn-green_index:hover {
+
+    background-color: #84ad16;
+
+    transform: translateY(-5px);
+
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+
+}
+
+/* =============================
+   NUBES BASE
+============================= */
+/* =============================
+   NUBES BASE (SIN FLOTADO)
+============================= */
+
+.nube_index {
+    position: absolute;
+    z-index: 5;
+    opacity: 0.75;
+    pointer-events: none;
+    filter: drop-shadow(0px 6px 10px rgba(0, 0, 0, 0.2));
+    left: -500px;
+
+    /* Solo el cruce horizontal para máxima fluidez */
+    animation: cruce_total linear infinite;
+}
+
+/* =============================
+   ANIMACION
+============================= */
+
+@keyframes cruce_total {
+    0% {
+        transform: translateX(-100%);
+        left: 0;
+    }
+
+    100% {
+        transform: translateX(100vw);
+        left: 0;
+    }
+}
+
+/* =============================
+   POSICION DE CADA NUBE (REAJUSTADAS)
+============================= */
+
+/* La n1 bajó al 15% para que no la tape el Navbar */
+/* =============================
+   POSICION DE CADA NUBE (REFINADAS)
+============================= */
+
+/* Nube 1: Bajada al 20% para que sea totalmente visible bajo la barra */
+.n1_index {
+    top: 20%;
+    width: 150px;
+    animation-duration: 50s;
+    animation-delay: -5s;
+}
+
+/* Grupo Superior - Separados por delays opuestos */
+.n7_index {
+    top: 30%;
+    width: 220px;
+    animation-duration: 65s;
+    animation-delay: -45s;
+}
+
+.n2_index {
+    top: 40%;
+    width: 240px;
+    animation-duration: 70s;
+    animation-delay: -15s;
+}
+
+/* Grupo Medio - Ajuste de delays para que no se choquen */
+.n10_index {
+    top: 50%;
+    width: 190px;
+    animation-duration: 60s;
+    animation-delay: -35s;
+}
+
+.n3_index {
+    top: 60%;
+    width: 300px;
+    animation-duration: 55s;
+    animation-delay: -10s;
+}
+
+/* Grupo Inferior - Espaciado extra para evitar el efecto 'juntas' */
+.n8_index {
+    top: 70%;
+    width: 170px;
+    animation-duration: 28s;
+    animation-delay: -55s;
+}
+
+.n4_index {
+    top: 80%;
+    width: 200px;
+    animation-duration: 52s;
+    animation-delay: -25s;
+}
+
+/* Nubes de fondo bajo el botón */
+.n5_index {
+    top: 88%;
+    width: 260px;
+    animation-duration: 80s;
+    animation-delay: -65s;
+}
+
+.n9_index {
+    top: 15%;
+    width: 240px;
+    animation-duration: 75s;
+    animation-delay: -30s;
+}
+
+/* Esta la moví arriba pero lejos de n1 */
+.n6_index {
+    top: 75%;
+    width: 180px;
+    animation-duration: 35s;
+    animation-delay: -20s;
+}
+
+/* =============================
+   RESPONSIVE
+============================= */
+
+@media (max-width:768px) {
+
+    .pregunta-box_index p {
+        white-space: normal;
+        text-align: center;
+    }
+
+    .hero-content_index {
+        margin-top: -20px;
+    }
+
+    .btn-green_index {
+        font-size: 1.3rem;
+        padding: 18px 0;
+    }
+
+    /* PEQUEÑO PARCHE PARA MÓVIL: Ajusta el padding de la navbar si los links bajan de línea */
+    .navbar_index {
+        padding: 10px 20px;
+        flex-direction: column;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .nav-links_index {
+        gap: 15px;
+    }
+
+}
+
+/* Al final de tu archivo .css del componente */
+:host {
+    display: block;
+    position: absolute;
+    width: 100%;
+    top: 0;
+    left: 0;
+    /* Evita que aparezcan barras de scroll raras durante la animación */
+    overflow: hidden;
+}
+
+/* Clase que aplicaremos justo antes de cambiar de página */
+.seccion-salida {
+    pointer-events: none;
+}
+
+.seccion-salida .world-bg_index,
+.seccion-salida .nube_index,
+.seccion-salida .hero-content_index,
+.seccion-salida .navbar_index {
+
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+
+    opacity: 0;
+    transform: scale(1.08);
+    filter: blur(10px);
+
+}
+
+/* =============================
+   RESPONSIVE Y ARREGLOS MÓVILES
+============================= */
+@media (max-width: 768px) {
+    .navbar_index {
+        flex-direction: column !important;
+        padding: 12px 15px !important;
+        border-radius: 25px !important;
+    }
+
+    .logo_index {
+        margin-bottom: 8px !important;
+    }
+
+    .nav-links_index {
+        flex-wrap: wrap !important;
+        gap: 10px !important;
+        justify-content: center !important;
+    }
+
+    .nav-links_index a {
+        font-size: 13px !important;
+    }
+
+    .pregunta-box_index {
+        max-width: 90%;
+        padding: 15px 20px !important;
+    }
+
+    .pregunta-box_index p {
+        white-space: normal !important;
+    }
+}

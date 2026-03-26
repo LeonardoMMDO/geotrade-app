@@ -1,0 +1,469 @@
+/* =========================================
+   INTERFAZ: REGISTRO (ESTILO GEO-TRADE)
+   ========================================= */
+
+body,
+html {
+    margin: 0;
+    padding: 0;
+    font-family: 'Poppins', sans-serif;
+    overflow-x: hidden;
+}
+
+/* CONTENEDOR PRINCIPAL CON FONDO */
+.registro-container {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: url('/assets/recursos/fondo-crudExplorador.png') no-repeat center center/cover;
+    background-color: #001f3f;
+}
+
+/* FLECHA REGRESAR */
+.btn-regresar-fixed {
+    position: fixed;
+    top: 30px;
+    left: 30px;
+    width: 40px;
+    height: 40px;
+    z-index: 2000;
+    transition: all 0.4s ease;
+}
+
+.btn-regresar-fixed svg {
+    fill: white;
+    filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.4));
+    transition: all 0.4s ease;
+}
+
+.btn-regresar-fixed:hover svg {
+    transform: scale(1.2);
+    filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.9));
+}
+
+/* CARD REGISTRO */
+.registro-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(15px);
+    padding: 30px 40px;
+    border-radius: 40px;
+    width: 100%;
+    max-width: 460px;
+    text-align: center;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    animation: slideUp 0.6s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.registro-title {
+    color: #333;
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin-bottom: 20px;
+}
+
+/* ICONO */
+.user-icon_reg {
+    width: fit-content;
+    margin: 0 auto 15px auto;
+}
+
+.user-icon_reg svg {
+    width: 85px;
+    height: 85px;
+    fill: #333;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: pointer;
+}
+
+.user-icon_reg:hover svg {
+    transform: scale(1.15) rotate(5deg);
+    fill: #7ab331;
+    filter: drop-shadow(0 0 20px rgba(122, 179, 49, 0.7));
+}
+
+/* INPUTS */
+.input-group_reg {
+    margin-bottom: 12px;
+}
+
+.input-group_reg input {
+    width: 100%;
+    padding: 13px 25px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 2px solid transparent;
+    border-radius: 50px;
+    color: #333;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+/* Neutralizar fondo de autocompletado del browser */
+.input-group_reg input:-webkit-autofill,
+.input-group_reg input:-webkit-autofill:hover,
+.input-group_reg input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.9) inset;
+    -webkit-text-fill-color: #333;
+    transition: background-color 9999s ease-in-out 0s;
+}
+
+.input-group_reg input:focus {
+    border-color: #7ab331;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(122, 179, 49, 0.15);
+}
+
+/* Borde verde cuando el campo está correctamente rellenado */
+.input-group_reg input.ng-valid.ng-dirty,
+.input-group_reg input.ng-valid.ng-touched {
+    border-color: #7ab331;
+    background: white;
+}
+
+.input-group_reg input.ng-invalid.ng-touched {
+    border-color: #ff4b2b;
+}
+
+/* ROL */
+.rol-label {
+    margin: 15px 0 10px;
+    font-weight: 600;
+    color: #555;
+    font-size: 1rem;
+}
+
+.rol-selection-container {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.rol-box {
+    flex: 1;
+    cursor: pointer;
+}
+
+.rol-box input {
+    display: none;
+}
+
+.rol-content {
+    background: white;
+    border: 2px solid #eee;
+    padding: 12px;
+    border-radius: 20px;
+    transition: 0.3s;
+    color: #666;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.rol-content i {
+    font-size: 1.4rem;
+}
+
+.rol-box input:checked+.rol-content {
+    border-color: #7ab331;
+    color: #7ab331;
+    background: rgba(122, 179, 49, 0.05);
+    font-weight: bold;
+}
+
+/* BOTON */
+.btn-green_crud {
+    background: #7ab331;
+    color: white;
+    border: none;
+    padding: 16px;
+    border-radius: 50px;
+    width: 100%;
+    font-weight: 700;
+    font-size: 1.05rem;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-green_crud:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(122, 179, 49, 0.4);
+}
+
+.btn-green_crud:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* OJO CONTRASEÑA */
+.input-password-reg {
+    position: relative;
+}
+
+.input-password-reg input {
+    padding-right: 48px;
+}
+
+.btn-toggle-pass {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #888;
+    font-size: 1.1rem;
+    padding: 0;
+    line-height: 1;
+    transition: color 0.2s;
+}
+
+.btn-toggle-pass:hover {
+    color: #7ab331;
+}
+
+/* CHECKBOX TÉRMINOS */
+.terminos-check-wrapper {
+    margin: 4px 0 18px;
+    text-align: left;
+}
+
+.terminos-check-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.terminos-check-label input[type="checkbox"] {
+    display: none;
+}
+
+.check-custom {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    border: 2px solid #ccc;
+    background: white;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.terminos-check-label input[type="checkbox"]:checked+.check-custom {
+    background: #7ab331;
+    border-color: #7ab331;
+}
+
+.terminos-check-label input[type="checkbox"]:checked+.check-custom::after {
+    content: '';
+    display: block;
+    width: 5px;
+    height: 9px;
+    border: 2px solid white;
+    border-top: none;
+    border-left: none;
+    transform: rotate(45deg) translateY(-1px);
+}
+
+.check-text {
+    font-size: 0.88rem;
+    color: #444;
+    line-height: 1.4;
+}
+
+.link-terminos {
+    color: #7ab331;
+    text-decoration: underline;
+    font-weight: 600;
+    transition: color 0.2s;
+}
+
+.link-terminos:hover {
+    color: #5f8e24;
+}
+
+.check-error {
+    margin-top: 5px;
+    padding-left: 30px;
+    font-size: 0.78rem;
+    color: #ff4d4d;
+}
+
+/* ===============================
+   FIX RESPONSIVE MOBILE
+   =============================== */
+
+@media (max-width: 576px) {
+
+    .registro-container {
+        align-items: flex-start;
+        padding: 90px 12px 20px;
+    }
+
+    .btn-regresar-fixed {
+        top: 30px;
+        left: 30px;
+        transform: none;
+        width: 40px;
+        height: 40px;
+    }
+
+    .registro-card {
+        width: 100%;
+        max-width: 360px;
+        padding: 24px 18px;
+        border-radius: 32px;
+        margin-top: 10px;
+    }
+
+    .modal-card {
+        width: 90%;
+        padding: 28px 20px;
+    }
+
+}
+
+/* ===============================
+   MODAL DE CONFIRMACIÓN
+   =============================== */
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    animation: fadeInOverlay 0.2s ease;
+}
+
+@keyframes fadeInOverlay {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.modal-card {
+    background: white;
+    border-radius: 24px;
+    padding: 36px 32px;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    animation: slideUpModal 0.25s ease-out;
+}
+
+@keyframes slideUpModal {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-warning-icon {
+    font-size: 2.6rem;
+    color: #f0a500;
+    margin-bottom: 10px;
+}
+
+.modal-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #222;
+    margin: 0 0 20px;
+    line-height: 1.4;
+}
+
+.modal-body {
+    margin-bottom: 24px;
+}
+
+.data-summary {
+    background: #f7f9fb;
+    border-radius: 14px;
+    padding: 16px 20px;
+    text-align: left;
+}
+
+.data-summary p {
+    margin: 6px 0;
+    font-size: 0.95rem;
+    color: #333;
+}
+
+.data-summary strong {
+    color: #111;
+}
+
+.modal-footer {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.btn-modal-cancel,
+.btn-modal-confirm {
+    flex: 1;
+    padding: 12px 0;
+    border: none;
+    border-radius: 50px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.25s;
+}
+
+.btn-modal-cancel {
+    background: #eee;
+    color: #555;
+}
+
+.btn-modal-cancel:hover {
+    background: #ddd;
+}
+
+.btn-modal-confirm {
+    background: #7ab331;
+    color: white;
+}
+
+.btn-modal-confirm:hover {
+    background: #5f8e24;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(122, 179, 49, 0.4);
+}

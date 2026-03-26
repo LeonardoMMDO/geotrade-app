@@ -1,0 +1,135 @@
+/* src/styles.css */
+
+/* Importación de Fuente */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+
+/* Variables para reutilizar en toda la app */
+:root {
+    --primary-biz: #2c3e50;
+    --accent-biz: #3498db;
+    --success: #27ae60;
+    --bg-light: #f4f7f6;
+    --white: #ffffff;
+    --dark-blue: #1a2a3a; /* El azul oscuro de tu navbar */
+    --light-blue: #a3c1e0; /* El azul claro de tus iconos */
+}
+
+/* Reset Universal */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Montserrat', sans-serif;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+}
+
+/* ===== HORARIO EN SIDEBAR DE LUGAR ===== */
+.horario-badge {
+    font-weight: 700;
+    font-size: 0.82rem;
+    padding: 2px 8px;
+    border-radius: 999px;
+}
+.horario-abierto {
+    background: #e8f8f0;
+    color: #1a7a43;
+}
+.horario-cerrado {
+    background: #fdf0f0;
+    color: #a33030;
+}
+.horario-hoy {
+    font-size: 0.82rem;
+    color: #6b7684;
+}
+
+/* ===== REVIEW MODAL: TRASH ICON BUTTON ===== */
+.review-rating-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.review-trash-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #c0392b;
+    opacity: 0.55;
+    padding: 2px 4px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+}
+.review-trash-btn:hover { opacity: 1; }
+
+/* ===== REVIEW TOAST ===== */
+.review-toast {
+    margin: 0 16px 10px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    animation: reviewToastIn 0.3s ease;
+}
+.review-toast--success { background: #e8f8f0; color: #1a7a43; border: 1px solid #b3dfc6; }
+.review-toast--error   { background: #fdf0f0; color: #a33030; border: 1px solid #f0c0c0; }
+@keyframes reviewToastIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== REVIEW DELETE CONFIRM OVERLAY ===== */
+.reviews-modal { position: relative; }
+.review-confirm-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.42);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    z-index: 20;
+}
+.review-confirm-card {
+    background: white;
+    border-radius: 14px;
+    padding: 28px 32px;
+    text-align: center;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.22);
+    max-width: 280px;
+    width: 90%;
+}
+.review-confirm-icon { font-size: 2.6rem; margin-bottom: 10px; }
+.review-confirm-card p {
+    font-weight: 700;
+    color: #1a2a3a;
+    margin-bottom: 20px;
+    font-size: 1rem;
+}
+.review-confirm-actions { display: flex; gap: 12px; justify-content: center; }
+.review-confirm-cancel {
+    padding: 9px 20px;
+    border-radius: 999px;
+    border: 1px solid #ccc;
+    background: #f5f5f5;
+    color: #555;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 0.88rem;
+}
+.review-confirm-cancel:hover { background: #e8e8e8; }
+.review-confirm-ok {
+    padding: 9px 20px;
+    border-radius: 999px;
+    border: none;
+    background: linear-gradient(135deg, #c0392b, #922b21);
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 0.88rem;
+}
+.review-confirm-ok:hover { background: linear-gradient(135deg, #a93226, #7b241c); }

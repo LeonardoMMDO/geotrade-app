@@ -1,0 +1,396 @@
+/* =========================================
+ANIMACIÓN GLOBAL DE ENTRADA
+========================================= */
+
+@keyframes reveal_epic{
+
+0%{
+opacity:0;
+transform:translateY(40px);
+filter:blur(10px);
+}
+
+100%{
+opacity:1;
+transform:translateY(0);
+filter:blur(0);
+}
+
+}
+
+
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+}
+
+body{
+font-family:'Poppins',sans-serif;
+overflow-x:hidden;
+}
+
+
+/* =============================
+NAVBAR
+============================= */
+
+.navbar_index{
+display:flex;
+justify-content:space-between;
+align-items:center;
+flex-wrap:wrap;
+width:92%;
+max-width:1200px;
+margin:30px auto;
+background:#203147;
+border-radius:50px;
+padding:12px 40px;
+position:fixed;
+top:0;
+left:0;
+right:0;
+z-index:1000;
+}
+
+/* LOGO */
+
+.logo_index{
+display:flex;
+align-items:center;
+gap:12px;
+}
+
+.logo_index h1{
+font-size:clamp(14px,2vw,22px);
+color:#fff;
+font-weight:600;
+}
+
+.pin-icon_index{
+height:28px;
+}
+
+
+/* LINKS */
+
+.nav-links_index{
+display:flex;
+list-style:none;
+gap:30px;
+flex-wrap:wrap;
+}
+
+.nav-links_index a{
+text-decoration:none;
+color:white;
+font-size:16px;
+font-weight:500;
+transition:.3s;
+white-space:nowrap;
+}
+
+.nav-links_index a:hover{
+color:#3b82f6;
+text-shadow:0 0 10px rgba(59,130,246,0.6);
+}
+
+
+/* =============================
+RESPONSIVE NAVBAR
+============================= */
+
+@media (max-width:768px){
+
+.navbar_index{
+flex-direction:column;
+align-items:center;
+padding:15px 20px;
+border-radius:25px;
+}
+
+.logo_index{
+margin-bottom:8px;
+}
+
+.nav-links_index{
+justify-content:center;
+gap:18px;
+}
+
+.nav-links_index a{
+font-size:14px;
+}
+
+}
+
+
+@media (max-width:420px){
+
+.nav-links_index{
+gap:12px;
+}
+
+.nav-links_index a{
+font-size:13px;
+}
+
+.logo_index h1{
+font-size:16px;
+}
+
+.pin-icon_index{
+height:22px;
+}
+
+}
+
+/* ==============================
+CONTACT SECTION
+============================== */
+
+.contact-section{
+min-height:100vh;
+padding-top:150px;
+padding-bottom:80px;
+display:flex;
+justify-content:center;
+position:relative;
+text-align:center;
+overflow:hidden;
+}
+
+
+/* BACKGROUND */
+
+.contact-bg{
+position:absolute;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background-image:url('/assets/recursos/fondo_contactanos.png');
+background-size:cover;
+background-position:center;
+filter:brightness(0.7);
+z-index:1;
+}
+
+
+/* CONTENT */
+
+.contact-content{
+position:relative;
+z-index:10;
+width:90%;
+max-width:1100px;
+margin:auto;
+color:white;
+}
+
+
+/* TITULO */
+
+.contact-title{
+font-size:42px;
+font-weight:700;
+margin-bottom:15px;
+}
+
+
+/* TEXTO */
+
+.contact-text{
+font-size:18px;
+line-height:1.6;
+margin-bottom:25px;
+}
+
+
+/* LINEA */
+
+.contact-divider{
+width:60%;
+margin:30px auto;
+border:1px solid white;
+}
+
+
+
+/* ==============================
+CARDS
+============================== */
+
+.contact-cards{
+margin-top:50px;
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:60px;
+justify-items:center;
+}
+
+
+/* CARD */
+
+.contact-card{
+display:flex;
+flex-direction:column;
+align-items:center;
+gap:18px;
+}
+
+
+/* ICON */
+
+.icon-circle{
+width:85px;
+height:85px;
+background:#6d8e12;
+border-radius:50%;
+display:flex;
+justify-content:center;
+align-items:center;
+font-size:36px;
+color:white;
+cursor:pointer;
+box-shadow:0 10px 25px rgba(0,0,0,0.35);
+transition:.35s;
+}
+
+.icon-circle:hover{
+background:#84ad16;
+transform:translateY(-6px) scale(1.05);
+box-shadow:0 15px 35px rgba(0,0,0,0.45);
+}
+
+
+/* BOX */
+
+.contact-box{
+background:rgba(255,255,255,0.9);
+color:#222;
+padding:18px 30px;
+border-radius:14px;
+font-weight:600;
+width:260px;
+text-align:center;
+box-shadow:0 10px 25px rgba(0,0,0,0.25);
+}
+
+
+/* EMAIL BREAK */
+
+.email-box{
+word-break:break-word;
+}
+
+
+
+/* ==============================
+RESPONSIVE
+============================== */
+
+@media(max-width:900px){
+
+.contact-cards{
+grid-template-columns:1fr;
+gap:45px;
+}
+
+.contact-divider{
+width:85%;
+}
+
+.contact-box{
+width:220px;
+}
+
+}
+
+@media(max-width:500px){
+
+.contact-title{
+font-size:30px;
+}
+
+.contact-text{
+font-size:16px;
+}
+
+.icon-circle{
+width:70px;
+height:70px;
+font-size:28px;
+}
+
+.contact-box{
+width:200px;
+padding:14px 18px;
+}
+
+}
+/* ==============================
+ANIMACIONES CONTACTO
+============================== */
+
+/* Fondo */
+
+.contact-bg{
+animation:reveal_epic 1.5s cubic-bezier(0.2,0.8,0.2,1) both;
+animation-delay:0.1s;
+}
+
+/* Navbar */
+
+.navbar_index{
+animation:reveal_epic 1.2s cubic-bezier(0.2,0.8,0.2,1) both;
+animation-delay:0.3s;
+}
+
+/* Título */
+
+.contact-title{
+animation:reveal_epic 1s ease both;
+animation-delay:0.6s;
+}
+
+/* Texto */
+
+.contact-text{
+animation:reveal_epic 1s ease both;
+animation-delay:0.8s;
+}
+
+/* Divider */
+
+.contact-divider{
+animation:reveal_epic 1s ease both;
+animation-delay:1s;
+}
+
+/* Cards */
+
+.contact-card{
+animation:reveal_epic 1s ease both;
+}
+
+.contact-card:nth-child(1){
+animation-delay:1.2s;
+}
+
+.contact-card:nth-child(2){
+animation-delay:1.4s;
+}
+
+.contact-card:nth-child(3){
+animation-delay:1.6s;
+}
+
+
+
+
+.about-card,
+.contact-card{
+will-change:transform,opacity;
+}
