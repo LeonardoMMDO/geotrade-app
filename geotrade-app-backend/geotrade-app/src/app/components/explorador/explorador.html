@@ -117,8 +117,10 @@
             <div class="place-card-redesigned">
                 <div class="place-header-redesigned">
                     <h2 class="place-name">{{ placeDisplayName || (selectedBiz?.nombre_empresa || 'Sin nombre') }}</h2>
-                    <span class="place-badge">{{ selectedPlace?.types?.[0] ? (selectedPlace?.types?.[0] | titlecase) :
-                        (selectedBiz?.categoria_empresa || 'Negocio') }}</span>
+                    <span class="place-badge">
+                        {{ selectedPlace?.types?.[0] ? (selectedPlace?.types?.[0] | titlecase) :
+                        (selectedBiz?.categoria_empresa | titlecase) || 'Negocio' }}
+                    </span>
                 </div>
 
                 <div class="place-gallery-hero">
@@ -165,7 +167,7 @@
                     </div>
 
                     <div class="description-panel" *ngIf="showDescriptionPanel">
-                        <h4>Descripcion del negocio</h4>
+                        <h4>Descripción del negocio</h4>
                         <p>{{ getSelectedDescription() }}</p>
                     </div>
                 </div>
@@ -219,7 +221,6 @@
                     <p>Cargando opiniones...</p>
                 </div>
 
-                <!-- Lista de opiniones existentes -->
                 <div class="reviews-list" *ngIf="!isLoadingReviews && placeReviews.length > 0; else noReviews">
                     <div class="review-item" *ngFor="let review of placeReviews">
                         <div class="review-user">
@@ -283,7 +284,6 @@
     <main class="map-container" id="main-content">
 
         <div #mapContainer id="map" class="map-placeholder">
-            <!-- El mapa aparecera aqui una vez cargado -->
         </div>
 
 

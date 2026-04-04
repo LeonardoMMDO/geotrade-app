@@ -25,7 +25,7 @@
       </div>
 
       <div class="input-group_reg">
-        <input type="email" placeholder="Correo electrónico" [(ngModel)]="usuario.correo" name="correo"
+        <input type="email" placeholder="Correo Electrónico" [(ngModel)]="usuario.correo" name="correo"
           #correo="ngModel" required
           pattern="^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}(\.[a-zA-Z]{2,})?$"
           (blur)="verificarCorreo()">
@@ -90,7 +90,7 @@
 
       <button type="button" class="btn-green_crud" [disabled]="registroForm.invalid || !aceptaTerminos || correoYaExiste"
         (click)="abrirConfirmacion()">
-        Crear cuenta
+        Crear Cuenta
       </button>
     </form>
   </div>
