@@ -1,13 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-
+import { environment } from '../../environments/environment';
 @Injectable({
   providedIn: 'root'
 })
 export class NegocioService {
   // Asegúrate de que esta URL sea exactamente la que responde tu backend
-  private apiUrl = 'http://localhost:8080/api/negocios';
+  private apiUrl = `${environment.apiUrl}/api/negocios`;
 
   constructor(private http: HttpClient) { }
 
