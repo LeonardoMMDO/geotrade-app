@@ -25,7 +25,8 @@
                 "input": "public"
               },
               "src/assets",
-              "src/GeoTrade-Logo.png"
+              "src/GeoTrade-Logo.png",
+              "src/_redirects"
             ],
             "styles": [
               "src/styles.css"
