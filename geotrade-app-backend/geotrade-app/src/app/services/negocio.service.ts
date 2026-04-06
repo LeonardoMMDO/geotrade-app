@@ -6,8 +6,7 @@ import { environment } from '../../environments/environment';
   providedIn: 'root'
 })
 export class NegocioService {
-  // Asegúrate de que esta URL sea exactamente la que responde tu backend
-  private apiUrl =  environment.apiUrl;
+  private apiUrl = `${environment.apiUrl}/negocios`;
 
   constructor(private http: HttpClient) { }
 
