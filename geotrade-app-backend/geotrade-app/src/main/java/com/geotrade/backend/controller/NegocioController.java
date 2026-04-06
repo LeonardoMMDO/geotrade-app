@@ -17,13 +17,12 @@ import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/negocios")
-@CrossOrigin(origins = "http://localhost:4200")
 public class NegocioController {
 
     @Autowired
     private NegocioRepository negocioRepository;
 
-    private final String UPLOAD_DIR = "C:/geotrade/uploads/";
+    private final String UPLOAD_DIR = "/tmp/uploads/";
 
     // Agrega este @Autowired junto a los otros
     @Autowired

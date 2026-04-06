@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 
 @CrossOrigin(
-    origins = "http://localhost:4200",
     methods = {
         RequestMethod.GET,
         RequestMethod.POST,

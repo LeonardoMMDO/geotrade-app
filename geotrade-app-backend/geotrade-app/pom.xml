@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.0.5</version>
+        <version>3.2.4</version>
         <relativePath/> </parent>
     <groupId>com.geotrade</groupId>
     <artifactId>backend</artifactId>
@@ -51,12 +51,9 @@ https://repo.maven.apache.org/maven2: Connect timed out)~~>--><dependency>
             <scope>test</scope>
         </dependency>
 
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-        </dependency>
-
         <!--~~(com.sendgrid:sendgrid-java:4.10.3 failed. Unable to download POM: com.sendgrid:sendgrid-java:4.10.3. Tried repositories:
-https://repo.maven.apache.org/maven2: Connect timed out)~~>--><dependency>
+            https://repo.maven.apache.org/maven2: Connect timed out)~~>-->
+        <dependency>
             <groupId>com.sendgrid</groupId>
             <artifactId>sendgrid-java</artifactId>
         </dependency>
@@ -68,7 +65,10 @@ https://repo.maven.apache.org/maven2: Connect timed out)~~>--><dependency>
     <version>8.1.0</version>
 </dependency>
 
-
+    <dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-mail</artifactId>
+</dependency>
 
     </dependencies>
 
