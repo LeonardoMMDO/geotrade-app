@@ -8,7 +8,7 @@ import { environment } from '../../environments/environment';
   providedIn: 'root'
 })
 export class SucursalService {
-  private apiUrl = `${environment.apiUrl}/api/sucursales`;
+  private apiUrl = `${environment.apiUrl}/sucursales`;
   constructor(private http: HttpClient) {}
 
   getSucursalesByNegocio(idNegocio: number): Observable<Sucursal[]> {
