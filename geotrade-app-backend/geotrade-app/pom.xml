@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.0.3</version>
+        <version>4.0.5</version>
         <relativePath/> </parent>
     <groupId>com.geotrade</groupId>
     <artifactId>backend</artifactId>
@@ -39,7 +39,13 @@
             <scope>runtime</scope>
         </dependency>
 
-        <dependency>
+        <!--~~(org.springframework.boot:spring-boot-test:4.0.5 failed. Unable to download POM: org.springframework.boot:spring-boot-test:4.0.5. Tried repositories:
+https://repo.maven.apache.org/maven2: Connect timed out)~~>--><!--~~(org.springframework.boot:spring-boot-test-autoconfigure:4.0.5 failed. Unable to download POM: org.springframework.boot:spring-boot-test-autoconfigure:4.0.5. Tried repositories:
+https://repo.maven.apache.org/maven2: Connect timed out)~~>--><!--~~(org.springframework:spring-test:7.0.6 failed. Unable to download POM: org.springframework:spring-test:7.0.6. Tried repositories:
+https://repo.maven.apache.org/maven2: Connect timed out)~~>--><!--~~(org.springframework.boot:spring-boot-test:4.0.5 failed. Unable to download POM: org.springframework.boot:spring-boot-test:4.0.5. Tried repositories:
+https://repo.maven.apache.org/maven2: Connect timed out)~~>--><!--~~(org.springframework.boot:spring-boot-test-autoconfigure:4.0.5 failed. Unable to download POM: org.springframework.boot:spring-boot-test-autoconfigure:4.0.5. Tried repositories:
+https://repo.maven.apache.org/maven2: Connect timed out)~~>--><!--~~(org.springframework:spring-test:7.0.6 failed. Unable to download POM: org.springframework:spring-test:7.0.6. Tried repositories:
+https://repo.maven.apache.org/maven2: Connect timed out)~~>--><dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
@@ -47,13 +53,12 @@
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-mail</artifactId>
         </dependency>
 
-        <dependency>
+        <!--~~(com.sendgrid:sendgrid-java:4.10.3 failed. Unable to download POM: com.sendgrid:sendgrid-java:4.10.3. Tried repositories:
+https://repo.maven.apache.org/maven2: Connect timed out)~~>--><dependency>
             <groupId>com.sendgrid</groupId>
             <artifactId>sendgrid-java</artifactId>
-            <version>4.10.2</version>
         </dependency>
 
 

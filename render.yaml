@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: geotrade-app-frontend
+    env: static
+    rootDir: geotrade-app-backend/geotrade-app
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist/geotrade-app/browser
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
