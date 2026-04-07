@@ -1,4 +1,4 @@
-  import { Component, AfterViewInit, OnInit, OnDestroy, HostListener } from '@angular/core';
+ import { Component, AfterViewInit, OnInit, OnDestroy, HostListener } from '@angular/core';
   import { CommonModule, NgClass } from '@angular/common';
   import { RouterModule } from '@angular/router';
   import { FormsModule } from '@angular/forms';
