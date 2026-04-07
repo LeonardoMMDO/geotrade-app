@@ -204,6 +204,7 @@
   }
 }
 
+
     ngOnInit() {
       const sessionData = localStorage.getItem('usuario');
       if (sessionData) {
