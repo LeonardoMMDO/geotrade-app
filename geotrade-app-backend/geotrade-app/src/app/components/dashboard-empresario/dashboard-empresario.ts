@@ -698,10 +698,17 @@
 
         let imgUrl: string | null = null;
         if (biz.fotos_url_empresa) {
-          // puede ser varias URLs separadas por coma
           const parts = biz.fotos_url_empresa.split(',');
-          imgUrl = `http://localhost:8080${parts[0]}`; // mostrar primera como icono
-        }
+          const principal = parts[0].trim();
+        if (principal.startsWith('http')) {
+        imgUrl = principal;
+    } else {
+        // Esto es por si aún tienes registros viejos en la DB que solo guardaron el nombre
+        imgUrl = `https://res.cloudinary.com/tu_cloud_name/image/upload/${principal}`;
+    }
+}
+
+        
 
         const icono = this.getCategoriaIconClass(biz.categoria_empresa);
         const idNegocioActual = (biz.id || (biz as any).id_negocio) as number;
