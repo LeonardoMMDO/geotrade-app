@@ -920,15 +920,18 @@ cerrarSesion() {
 
   getBizPhotoUrl(biz: Negocio | null): string | null {
     if (!biz || !biz.fotos_url_empresa) return null;
+    
     const parts = biz.fotos_url_empresa.split(',').filter(p => p && p.trim());
-    if (!parts.length) return null;
-    const first = parts[0];
-    // backend stores paths like /uploads/xxx
-    if (first.startsWith('http')) return first;
-    return `http://localhost:8080${first}`;
-  }
+    if (parts.length === 0) return null;
+    
+    const first = parts[0].trim();
+        if (first.startsWith('http')) {
+        return first;
+    }
+  
+    return first; 
+}
 
-  // ==== Text-to-Speech helpers ====
   private speak(text: string) {
     if (!('speechSynthesis' in window)) return;
     const utter = new SpeechSynthesisUtterance(text);
